@@ -43,13 +43,27 @@ wireDiam				        = wireDiamNominal + 0.1;		// Wire diameter in mm's, note thi
 windingFudge			= 0.3;		// Fudge factor in mm's to add to the space for the coil to allow for 3D printer inaccuracy	
 coilWindingWidth	            = wireDiam * (coilWiresNum + 0.5) + windingFudge;	// The space for the wire to fit in on the former
 coilWindingHeight               = wireDiam * coilLayersNum;
-coilWindingRadiusInner          = coilRadius - coilWindingHeight / 2;
 coilFlangeHeightPad             = 3.0;
-coilFlangeHeight			    = coilWindingHeight / 2 + coilFlangeHeightPad;
 coilFlangeWidth		        	= 3.0;		// The width of the flange
 
+// Bottom winding begins
+coilWindingRadiusInner          = coilRadius - coilWindingHeight / 2;
+
+// Physical size of the coil
+coilFlangeRadius                = coilWindingRadiusInner + coilWindingHeight + coilFlangeHeightPad;
+
+coilHomogeneousDiam				= coilRadius * 2/3;
+coilTotalThickness		= coilWindingWidth + coilFlangeWidth * 2;
+
+
+coilOuterRingThickness = 0.15 * coilWindingRadiusInner;
+coilInnerRingThickness = 0.2 * coilHomogeneousDiam;
+
+coilOuterRingBottomRadius = coilWindingRadiusInner - coilOuterRingThickness;
+
 // These settings effect parts of the total object
-retainerThickness			= 4;
+retainerCoilHolderThickness	= 5;
+retainerCoilHolderHeight    = (coilFlangeRadius - coilOuterRingBottomRadius) / 2;
 retainerWidth				= 10;
 retainerDepth				= 7;
 
@@ -63,34 +77,21 @@ wallUserHoleDiam		= 5.5;
 tableHeightAdd				= 10;			// The height of the table can be increased by a positive number here
 tableThickness				= 3;
 tablePostDiameter			= 10;
-cylinderReinforcementFudge	= 0.3;			// Post reinforcement diameter fudge factor for fit
-cylinderReinforcementDiameter	= tablePostDiameter + 5 * 2; 
-cylinderReinforcementHeight	= 10;
-
 
 
 manifoldCorrection 				= .1;
 
-coilHomogeneousDiam				= coilRadius * 2/3;
-coilTotalThickness		= coilWindingWidth + coilFlangeWidth * 2;
 
-
-
-
-retainerPlatformLength = coilRadius + coilTotalThickness + retainerThickness * 2;
-
-
+retainerPlatformLength = coilRadius + coilTotalThickness + retainerCoilHolderThickness * 2;
 
 retainerAngleStep           = 30;
 retainerLocationAngles		= [-1.5 * retainerAngleStep, 1.5 * retainerAngleStep, 2.5 * retainerAngleStep, 3.5 * retainerAngleStep, 4.5 * retainerAngleStep];
 retainerLocationAnglesBlock	= [-retainerAngleStep / 2, retainerAngleStep / 2];
 
-platformOffsetZ			= - (coilRadius + coilFlangeHeight + platformThickness / 2);
+platformOffsetZ			= - (coilFlangeRadius + platformThickness / 2);
 wallUserWidth			= (coilRadius - (coilWindingWidth + coilFlangeWidth)) - 4;
 
-
 wallUserHoleOffset		    = 15; 
-
 
 tablePostOffset				= [coilRadius * 0.25, 0, 0];
 
@@ -98,7 +99,7 @@ $fn = 80;
 
 
 //retainersAllFlat();
-//retainersAll();
+retainersAll();
 platform();
 //platformTable();
 fullHelmholtzCoil();
@@ -129,9 +130,13 @@ module platformTable()
 
 module platform()
 {
+    cylinderReinforcementFudge	= 0.3;
+    cylinderReinforcementDiameter	= tablePostDiameter + 5 * 2; 
+    cylinderReinforcementHeight	= 10;
+    
 	postReinforcementOffsetZ = platformOffsetZ + (platformThickness + cylinderReinforcementHeight) / 2;
     
-    retainerFaceY = (coilRadius + coilFlangeHeight) * sin(retainerLocationAnglesBlock[1]);
+    retainerFaceY = (coilFlangeRadius) * sin(retainerLocationAnglesBlock[1]);
     
     // Wire hooks
     hookRadius = 2 * wireDiam + windingFudge;
@@ -200,7 +205,7 @@ module platform()
     module platformRetainer(angle, hole=false)
     {
         rotate( [angle, 0, 0] )
-        translate( [0, 0, -(coilRadius + coilFlangeHeight + retainerDepth / 2)] )
+        translate( [0, 0, -(coilFlangeRadius + retainerDepth / 2)] )
         retainer();
     }
     
@@ -278,7 +283,7 @@ module retainersAll()
 {
 	for ( angle = retainerLocationAngles ) {
 		rotate( [angle, 0, 0] )
-        translate( [0, 0, -(coilRadius + coilFlangeHeight + retainerDepth / 2)] )
+        translate( [0, 0, -(coilFlangeRadius + retainerDepth / 2)] )
         retainer();
     }
 }
@@ -297,10 +302,10 @@ module retainer()
 
 module retainerBlocks()
 {
-    retainerBlockDimensions		= [retainerThickness, retainerWidth, retainerThickness];
+    retainerBlockDimensions		= [retainerCoilHolderThickness - 2 * manifoldCorrection, retainerWidth, retainerCoilHolderHeight];
     
-    retainerBlockOffset1		= [(coilTotalThickness + retainerThickness) / 2, 0, (retainerDepth + retainerThickness) / 2];
-    retainerBlockOffset2		= [- coilTotalThickness, retainerBlockOffset1[1], retainerBlockOffset1[2]];
+    retainerBlockOffset1		= [(coilTotalThickness + retainerCoilHolderThickness) / 2, 0, (retainerDepth + retainerCoilHolderHeight) / 2];
+    retainerBlockOffset2		= [- retainerBlockOffset1[0], retainerBlockOffset1[1], retainerBlockOffset1[2]];
     
 	translate( retainerBlockOffset1 )
 		cube( retainerBlockDimensions, center=true );
@@ -337,11 +342,7 @@ module coilHelmholtzFlat()
 
 module helmholtzCoil()
 {
-    coilOuterRingThickness = 0.15 * coilWindingRadiusInner;
-    coilInnerRingThickness = 0.2 * coilHomogeneousDiam;
-    
-    coilOuterRingBottomRadius = coilWindingRadiusInner - coilOuterRingThickness;
-    
+   
     coilSpokeLength				= coilWindingRadiusInner - coilOuterRingThickness / 2 - coilHomogeneousDiam / 2 - coilInnerRingThickness / 2;
 
     coilSpokeOffset				= [0, (coilHomogeneousDiam + coilSpokeLength + coilInnerRingThickness) / 2, 0];
@@ -365,24 +366,23 @@ module helmholtzCoil()
 	{
 		union()
 		{
-			// Print the inside outer ring (where the coil gets wrapped around)
+			// Print the outer ring (where the coil gets wrapped around)
 			donut( outerRadius=coilWindingRadiusInner, innerRadius = coilOuterRingBottomRadius, height=coilWindingWidth ); 
 
-			// Print the inside inner ring (where the inside marks the usable volume)
+			// Print the inner ring (homogeneous volume)
 			donut( outerRadius=coilHomogeneousDiam / 2 + coilInnerRingThickness,
 				   innerRadius = coilHomogeneousDiam / 2,
 			 	   height=coilTotalThickness ); 
 	
-			// Print the coil top outer ring retainer
+			// Print left and right coil flanges
 			{
 				translate( coilFlangeOffset )
-					donut( outerRadius=coilRadius + coilFlangeHeight,
+					donut( outerRadius=coilFlangeRadius,
 						   innerRadius = coilOuterRingBottomRadius,
 						   height=coilFlangeWidth );
 
-				// Print the coil bottom outer ring retainer
 				translate( -coilFlangeOffset )
-					donut( outerRadius=coilRadius + coilFlangeHeight,
+					donut( outerRadius=coilFlangeRadius,
 						   innerRadius = coilOuterRingBottomRadius,
 						   height=coilFlangeWidth ); 
 			}
