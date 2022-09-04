@@ -63,6 +63,8 @@ coilOuterRingBottomRadius = coilWindingRadiusInner - coilOuterRingThickness;
 
 coilHomogeneousCenterRadius = coilHomogeneousDiam / 2 + coilInnerRingThickness / 2;
 
+coilFlangeOffset			= [0, 0, (coilWindingWidth + coilFlangeWidth) / 2];
+
 // These settings effect parts of the total object
 retainerCoilHolderThickness	= 5;
 retainerCoilHolderHeight    = (coilFlangeRadius - coilOuterRingBottomRadius) / 2;
@@ -119,17 +121,20 @@ wallUserHoleOffset		    = 15;
 
 $fn = 80;
 
-
+/*
 drawPlatform();
 drawPlatformTable();
 drawRetainersOnScene();
 drawHelmholtzCoilsOnScene();
 drawCoilTableSupportOnScene();
+*/
 
 //drawHelmholtzCoilFlat();
 //drawCoilTableSupportFlat();
 //drawRetainersFlat();
 
+bottomHalfHelmholtzCoil();
+//topHalfHelmholtzCoil();
 
 module drawCoilTableSupportFlat() {
     for (i = [-1, 1]) {
@@ -165,9 +170,7 @@ module drawPlatformTable()
     tableDimensions			= [tableWidth, tableSizeY, tableThickness ];
     tableMaterialThickness  = 4;
     tableCutDimensions      = [tableDimensions[0] - 2 * tableMaterialThickness, tableDimensions[1] - 2 * tableMaterialThickness, tableDimensions[2] - 2 * tableMaterialThickness];
-    
-    echo(">>> tableMaterialThickness ", tableThickness);
-    
+  
     difference() {
         union() {
             translate( [0, 0, tableOffsetZ] )
@@ -420,6 +423,57 @@ module drawHelmholtzCoilFlat()
 }
 
 
+module helmholtzCoilHalfer()
+{
+    coilHalferFlangeDimensions		= [coilFlangeRadius * 2,
+								   coilFlangeRadius,
+								   coilFlangeWidth + manifoldCorrection * 2];
+    coilHalferWireSpaceDimensions		= [coilWindingRadiusInner * 2, coilWindingRadiusInner, coilWindingWidth + manifoldCorrection * 2];
+    coilHalferWireSpaceOffset			= [0, coilWindingRadiusInner / 2, 0];
+    coilHalferFlangeOffset1			= [0, coilFlangeRadius / 2 + manifoldCorrection,   coilFlangeOffset[2]];
+    coilHalferFlangeOffset2			= [coilHalferFlangeOffset1[0], coilHalferFlangeOffset1[1], - coilFlangeOffset[2]];
+    coilHalferRotataionFlangeAngle	= 7;
+    
+	// Slices a helmholtz coil in half for 3D printing
+	rotate( [0, 0, -coilHalferRotataionFlangeAngle / 2] )
+		translate( coilHalferWireSpaceOffset )
+			cube( coilHalferWireSpaceDimensions, center = true );
+
+	rotate( [0, 0, coilHalferRotataionFlangeAngle / 2] )
+		translate( coilHalferFlangeOffset1 )
+			cube( coilHalferFlangeDimensions, center = true );
+
+	rotate( [0, 0, coilHalferRotataionFlangeAngle / 2] )
+		translate( coilHalferFlangeOffset2 )
+			cube( coilHalferFlangeDimensions, center = true );
+}
+
+
+module bottomHalfHelmholtzCoil()
+{
+	difference()
+	{
+		helmholtzSingleCoil();
+        
+        rotate( [0, 0, 90] )
+		helmholtzCoilHalfer();
+	}
+}
+
+
+
+module topHalfHelmholtzCoil()
+{
+	difference()
+	{
+		helmholtzSingleCoil();
+        
+        rotate( [0, 0, -90] )
+        helmholtzCoilHalfer();
+	}
+}
+
+
 
 module helmholtzSingleCoil()
 {
@@ -428,7 +482,6 @@ module helmholtzSingleCoil()
 
     coilSpokeOffset				= [0, (coilHomogeneousDiam + coilSpokeLength + coilInnerRingThickness) / 2, 0];
     
-    coilFlangeOffset			= [0, 0, (coilWindingWidth + coilFlangeWidth) / 2];
     
     module coilWireHole()
     {
