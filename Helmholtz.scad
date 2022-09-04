@@ -111,6 +111,7 @@ tableHoleSize = tableThickness / (2 * sqrt(2));
 
 
 coilTableSupportLen = retainerPlatformLength;
+coilTableSupportLenPadded = coilTableSupportLen + 20;
 
 wallUserWidth		= tableWidth;
 wallUserHoleOffset		    = 15; 
@@ -119,21 +120,31 @@ wallUserHoleOffset		    = 15;
 $fn = 80;
 
 
-//retainersAllFlat();
-retainersAll();
-platform();
-platformTable();
-fullHelmholtzCoil();
-
-//coilHelmholtzFlat();
-
+drawPlatform();
+drawPlatformTable();
+drawRetainersOnScene();
+drawHelmholtzCoilsOnScene();
 drawCoilTableSupportOnScene();
+
+//drawHelmholtzCoilFlat();
+//drawCoilTableSupportFlat();
+//drawRetainersFlat();
+
+
+module drawCoilTableSupportFlat() {
+    for (i = [-1, 1]) {
+        translate([0, i * tableHoleSize, 0])
+        rotate([-45, 0, 0])
+        drawCoilTableSupport(length=coilTableSupportLenPadded, fudge=-0.4);
+    }
+    
+}
 
 
 module drawCoilTableSupportOnScene() {
     for (flipY = [-1, 1]) {
         translate([0, flipY * tableHoleY, tableOffsetZ])
-        drawCoilTableSupport(length=coilTableSupportLen + 20, fudge=-0.4);
+        drawCoilTableSupport(length=coilTableSupportLenPadded, fudge=-0.4);
     }
 }
 
@@ -144,7 +155,7 @@ module drawCoilTableSupport(length=coilTableSupportLen, fudge=0) {
 }
 
 
-module platformTable()
+module drawPlatformTable()
 {
 	postHeight				= tableOffsetZ - platformOffsetZ + (platformThickness + tableThickness) / 2;
 	postHeightOffset 		= platformOffsetZ + (postHeight - platformThickness) / 2;
@@ -184,7 +195,7 @@ module platformTable()
 }
 
 
-module platform()
+module drawPlatform()
 {
 
 	postReinforcementOffsetZ = platformOffsetZ + (platformThickness + cylinderReinforcementHeight) / 2;
@@ -334,7 +345,7 @@ module platform()
 
 
 
-module retainersAllFlat()
+module drawRetainersFlat()
 
 {
     coilNumRetainers = len(retainerLocationAngles);
@@ -347,7 +358,7 @@ module retainersAllFlat()
 
 
 
-module retainersAll()
+module drawRetainersOnScene()
 
 {
 	for ( angle = retainerLocationAngles ) {
@@ -385,16 +396,16 @@ module retainerBlocks()
 
 
 
-module fullHelmholtzCoil()
+module drawHelmholtzCoilsOnScene()
 {
 	rotate( [0, 90, 0] )
 	{
 		translate( [0, 0, coilRadius / 2] )
         rotate( [180, 0, 0] )
-        *helmholtzCoil();
+        helmholtzSingleCoil();
         
 		translate( [0, 0, -coilRadius / 2] )
-        helmholtzCoil();
+        helmholtzSingleCoil();
 
 		// Show the usable array grayed out
 		// cylinder( r=coilHomogeneousDiam / 2, h=coilRadius, center = true );	
@@ -403,14 +414,14 @@ module fullHelmholtzCoil()
 
 
 
-module coilHelmholtzFlat()
+module drawHelmholtzCoilFlat()
 {
-    helmholtzCoil();
+    helmholtzSingleCoil();
 }
 
 
 
-module helmholtzCoil()
+module helmholtzSingleCoil()
 {
    
     coilSpokeLength				= coilWindingRadiusInner - coilOuterRingThickness / 2 - coilHomogeneousDiam / 2 - coilInnerRingThickness / 2;
