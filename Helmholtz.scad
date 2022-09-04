@@ -322,9 +322,9 @@ module fullHelmholtzCoil()
 	{
 		translate( [0, 0, coilRadius / 2] )
         rotate( [180, 0, 0] )
-            *helmholtzCoil();
+        *helmholtzCoil();
 		translate( [0, 0, -coilRadius / 2] )
-            %helmholtzCoil();
+        %helmholtzCoil();
 
 		// Show the usable array grayed out
 		// cylinder( r=coilHomogeneousDiam / 2, h=coilRadius, center = true );	
@@ -352,13 +352,13 @@ module helmholtzCoil()
     module coilWireHole()
     {
         // Account for Litz wire soldering. Make the radius twice larger.
-        hole_radius = wireDiam + windingFudge;
-        trench_width = wireDiam * coilLayersNum + windingFudge;
+        holeRadius = wireDiam + windingFudge;
+        trenchWidth = wireDiam * coilLayersNum + windingFudge;
         h = coilFlangeWidth + manifoldCorrection * 2;
-        translate([trench_width / 2, 0, 0])
+        translate([trenchWidth / 2, 0, 0])
         intersection() {
-            cylinder(r=trench_width / 2, h=h, center = true);
-            cube([trench_width, 2 * hole_radius, h], center=true);
+            cylinder(r=trenchWidth / 2, h=h, center = true);
+            cube([trenchWidth, 2 * holeRadius, h], center=true);
         }
     }
 
@@ -400,8 +400,8 @@ module helmholtzCoil()
 		}
 
 
-		translate( [coilRadius, 0, (coilWindingWidth + coilFlangeWidth) / 2] )
-			%coilWireHole();
+		translate( [coilWindingRadiusInner, 0, (coilWindingWidth + coilFlangeWidth) / 2] )
+			coilWireHole();
 	}
 }
 
