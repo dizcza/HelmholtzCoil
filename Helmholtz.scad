@@ -24,7 +24,7 @@
 //		fits on the printed bed, then print 1 and 2 (the coil halves)
 //
 //		Coil halves - 10% infill, 2 shells and full support (including exterior)
-//		Platform - 5% infill, 2 shells
+//		table - 5% infill, 2 shells
 //		Everything else, 10% infill, 2 shells
 //
 // Assembly:
@@ -46,10 +46,10 @@ coilFormerFlangeWidth			= 3.0;		// The width of the flange
 // These settings effect general coil geometry
 coilOuterRingPercentage			= 1 - 0.15;	// The size of the outer ring based on a percentage of the radius
 coilInnerRingPercentage			= 0.20;		// The size of the inner ring based on a percentage of the radius
-coilWireSourceRotationAngle     = 8;
+coilWireEnterRotationAngle      = 0;
 
 // These settings effect parts of the total object
-coilRetainerThickness			= 3;
+coilRetainerThickness			= 4;
 coilRetainerWidth				= 10;
 coilRetainerDepth				= 7;
 
@@ -58,12 +58,12 @@ coilMountingBlockWidth			= 210;		// It would make sense to make this wide enough
 mountingPostBlockHeight			= 25;
 mountingPostBlockThickness		= 4;
 mountingPostDiameter			= 5.5;
-platformHeightAdd				= 10;			// The height of the table can be increased by a positive number here
-platformThickness				= 3;
-platformPostDiameter			= 10;
-platformPostReinforcementFudge	= 0.3;			// Post reinforcement diameter fudge factor for fit
-platformPostReinforcementDiameter	= platformPostDiameter + 5 * 2; 
-platformPostReinforcementHeight	= 10;
+tableHeightAdd				= 10;			// The height of the table can be increased by a positive number here
+tableThickness				= 3;
+tablePostDiameter			= 10;
+tablePostReinforcementFudge	= 0.3;			// Post reinforcement diameter fudge factor for fit
+tablePostReinforcementDiameter	= tablePostDiameter + 5 * 2; 
+tablePostReinforcementHeight	= 10;
 
 
 
@@ -73,7 +73,6 @@ coilFormerWireSpaceThickness	= coilWireDiameter * (coilWiresNum + 0.5) + coilWir
 manifoldCorrection 				= .1;
 
 coilUsableDiameter				= coilRadius * 2/3;
-coilUsableLength				= coilRadius; 
 coilFormerTotalThickness		= coilFormerWireSpaceThickness + coilFormerFlangeWidth * 2;
 coilSpokeRotationAngles			= [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5];
 coilSpokeLength					= coilRadius - (coilUsableDiameter / 2) - 2.0;
@@ -83,7 +82,7 @@ coilFormerFlangeOffset			= [0, 0, (coilFormerWireSpaceThickness + coilFormerFlan
 
 coilOffset1						= [0, 			  0,   			   coilRadius / 2];
 coilOffset2						= [coilOffset1[0], coilOffset1[1], - coilOffset1[2]];
-coilRetainerDimensions			= [coilUsableLength + coilFormerTotalThickness + coilRetainerThickness * 2, coilRetainerWidth, coilRetainerDepth];
+coilRetainerDimensions			= [coilRadius + coilFormerTotalThickness + coilRetainerThickness * 2, coilRetainerWidth, coilRetainerDepth];
 coilRetainerBlockDimensions		= [coilRetainerThickness, coilRetainerWidth, coilRetainerThickness];
 coilRetainerBlockOffset1		= [(coilFormerTotalThickness + coilRetainerThickness) / 2,
 								   0,
@@ -100,9 +99,10 @@ mountingPostBlockOffset			= [0, ( coilMountingBlockDimensions[1] - mountingPostB
 								   ( mountingPostBlockDimensions[2] + coilMountingBlockDimensions[2] ) / 2];
 mountingPostOffset1				= [15, 0, 0]; 
 mountingPostOffset2				= [-mountingPostOffset1[0], mountingPostOffset1[1], mountingPostOffset1[2]];
-platformDimensions				= [mountingPostBlockWidth, coilUsableDiameter, platformThickness ];
-platformOffset					= [0, 0, -(platformThickness / 2 + coilUsableDiameter / 2) + platformHeightAdd];
-platformPostOffset				= [coilRadius * 0.25, 0, 0];
+tableDimensions				= [mountingPostBlockWidth, coilUsableDiameter, tableThickness ];
+tableOffset					= [0, 0, -(tableThickness / 2 + coilUsableDiameter / 2) + tableHeightAdd];
+tablePostOffset				= [coilRadius * 0.25, 0, 0];
+
 
 $fn = 80;
 
@@ -110,89 +110,130 @@ $fn = 80;
 //coilRetainersAllFlat();
 coilRetainersAll();
 coilMountingBlock();
-//platform();
+//table();
 fullHelmholtzCoil();
 
 //coilHelmholtzFlat();
 
 
-module platform()
+module table()
 {
-	postHeight				= platformOffset[2] - coilMountingBlockOffset[2] + (coilMountingBlockDimensions[2] + platformThickness) / 2;
+	postHeight				= tableOffset[2] - coilMountingBlockOffset[2] + (coilMountingBlockDimensions[2] + tableThickness) / 2;
 	postHeightOffset 		= coilMountingBlockOffset[2] + (postHeight - coilMountingBlockDimensions[2]) / 2;
 
-	translate( platformOffset )
-		cube( platformDimensions, center=true );
+	translate( tableOffset )
+		cube( tableDimensions, center=true );
 
-	translate( platformPostOffset )
+	translate( tablePostOffset )
 		translate( [0, 0, postHeightOffset] )
-			cylinder( r=platformPostDiameter / 2, h=postHeight, center=true );
+			cylinder( r=tablePostDiameter / 2, h=postHeight, center=true );
 
-	translate( -platformPostOffset )
+	translate( -tablePostOffset )
 		translate( [0, 0, postHeightOffset] )
-			cylinder( r=platformPostDiameter / 2, h=postHeight, center=true );
+			cylinder( r=tablePostDiameter / 2, h=postHeight, center=true );
 }
 
 
 
 module coilMountingBlock()
 {
-	postReinforcementOffsetZ	= coilMountingBlockOffset[2] + (coilMountingBlockDimensions[2] + platformPostReinforcementHeight) / 2;
+	postReinforcementOffsetZ	= coilMountingBlockOffset[2] + (coilMountingBlockDimensions[2] + tablePostReinforcementHeight) / 2;
+    
+    module wallWithSinkSource()
+    {
+        translate( mountingPostBlockOffset )
+        difference()
+        {
+            cube( mountingPostBlockDimensions, center=true );
 
-	difference()
-	{
-		union()
+            // Mounting post holes
+            translate( mountingPostOffset1 )
+                rotate( [90, 0, 0] )
+                    cylinder( r=mountingPostDiameter / 2, h = mountingPostBlockDimensions[1] + manifoldCorrection * 2, center=true );
+
+            translate( mountingPostOffset2 )
+                rotate( [90, 0, 0] )
+                    cylinder( r=mountingPostDiameter / 2, h = mountingPostBlockDimensions[1] + manifoldCorrection * 2, center=true );
+        }
+    }
+    
+    module wireBottomBox()
+    {
+        boxDepth = 2.0;
+        padToCoil = 3.0;
+        openerOffset = coilRadius / 8;
+        
+        h_open = 2 * coilWireDiameter + 1.0;
+        w_open = 3 * coilWireDiameter + 1.0;
+        h_closed = h_open + boxDepth;
+        w_closed = w_open + 2 * boxDepth;
+        length = coilRadius - 2 * (coilFormerTotalThickness / 2 + padToCoil);
+        translate([0, 0, coilMountingBlockThickness / 2 + h_closed / 2 - manifoldCorrection])
+        difference() {
+            cube([length, w_closed, h_closed], center=true);
+            translate([0, 0, -(boxDepth + manifoldCorrection) / 2]) {
+                cube([length + manifoldCorrection * 2, w_open, h_open], center=true);
+                translate([length / 2 - openerOffset, w_closed / 2 - boxDepth / 2, 0])
+                cube([w_open, boxDepth + 2 * manifoldCorrection, h_open], center=true);
+            }
+        }
+    }
+    
+    module platformRetainers()
+    {
+        for ( angle = coilRetainerLocationAnglesBlock )
+        rotate( [angle, 0, 0] )
+        translate( [0, 0, -(coilRadius + coilFormerFlangeHeight + coilRetainerDimensions[2] / 2)] )
+        coilRetainer();
+    }
+    
+    module tableReinforcement()
+    {
+        translate( [0, 0, postReinforcementOffsetZ] )
+        donut( outerRadius=tablePostReinforcementDiameter / 2,
+           innerRadius = tablePostDiameter / 2 + tablePostReinforcementFudge,
+           height=tablePostReinforcementHeight );
+    }
+    
+    module reinforcementFloorCut()
+    {
+        translate( [0, 0, postReinforcementOffsetZ - coilMountingBlockDimensions[2] / 2] )
+        cylinder( r=tablePostDiameter / 2 + tablePostReinforcementFudge,
+                  h=coilMountingBlockDimensions[2] + tablePostReinforcementHeight + manifoldCorrection * 2,
+                  center=true ); 
+    }
+
+    module platformFilled()
+    {
+        union()
 		{
 			translate( coilMountingBlockOffset )
 			{
-				cube( coilMountingBlockDimensions, center=true );
-
-				translate( mountingPostBlockOffset )
-					difference()
-					{
-						cube( mountingPostBlockDimensions, center=true );
-
-						// Mounting post holes
-						translate( mountingPostOffset1 )
-							rotate( [90, 0, 0] )
-								cylinder( r=mountingPostDiameter / 2, h = mountingPostBlockDimensions[1] + manifoldCorrection * 2, center=true );
-
-						translate( mountingPostOffset2 )
-							rotate( [90, 0, 0] )
-								cylinder( r=mountingPostDiameter / 2, h = mountingPostBlockDimensions[1] + manifoldCorrection * 2, center=true );
-					}
+				%cube( coilMountingBlockDimensions, center=true );
+                wallWithSinkSource();
+                wireBottomBox();
 			}
+            
+            platformRetainers();
+            
 
-			for ( coilRetainerLocationAngle = coilRetainerLocationAnglesBlock )
-				rotate( [coilRetainerLocationAngle, 0, 0] )
-					translate( [0, 0, -(coilRadius + coilFormerFlangeHeight + coilRetainerDimensions[2] / 2)] )
-						coilRetainer();
 			// Post reinforcement
-			translate( platformPostOffset )
-				translate( [0, 0, postReinforcementOffsetZ] )
-					donut( outerRadius=platformPostReinforcementDiameter / 2,
-						   innerRadius = platformPostDiameter / 2 + platformPostReinforcementFudge,
-						   height=platformPostReinforcementHeight );
-
-			translate( -platformPostOffset )
-				translate( [0, 0, postReinforcementOffsetZ] )
-					donut( outerRadius=platformPostReinforcementDiameter / 2,
-						   innerRadius = platformPostDiameter / 2 + platformPostReinforcementFudge,
-						   height=platformPostReinforcementHeight );
+			*translate( tablePostOffset )
+            tableReinforcement();
+			*translate( -tablePostOffset )
+            tableReinforcement();
 		}
+    }
+
+	difference()
+	{
+		platformFilled();
 
 		// Remove holes in coil mounting block for post reinforcement
-		translate( platformPostOffset )
-			translate( [0, 0, postReinforcementOffsetZ - coilMountingBlockDimensions[2] / 2] )
-				cylinder( r=platformPostDiameter / 2 + platformPostReinforcementFudge,
-					  	  h=coilMountingBlockDimensions[2] + platformPostReinforcementHeight + manifoldCorrection * 2,
-					  	  center=true ); 
-
-		translate( -platformPostOffset )
-			translate( [0, 0, postReinforcementOffsetZ - coilMountingBlockDimensions[2] / 2] )
-				cylinder( r=platformPostDiameter / 2 + platformPostReinforcementFudge,
-					  	  h=coilMountingBlockDimensions[2] + platformPostReinforcementHeight + manifoldCorrection * 2,
-					  	  center=true ); 
+		translate( tablePostOffset )
+        *reinforcementFloorCut();
+		translate( -tablePostOffset )
+        *reinforcementFloorCut();
 	}
 }
 
@@ -244,17 +285,17 @@ module coilRetainerBlocks()
 
 module fullHelmholtzCoil()
 {
-    rotate( [7, 0, 0] )
+    rotate( [coilWireEnterRotationAngle, 0, 0] )
 	rotate( [0, 90, 0] )
 	{
 		translate( coilOffset1 )
         rotate( [180, 0, 0] )
-            helmholtzCoil();
+            *helmholtzCoil();
 		translate( coilOffset2 )
-            helmholtzCoil();
+            %helmholtzCoil();
 
 		// Show the usable array grayed out
-		// cylinder( r=coilUsableDiameter / 2, h=coilUsableLength, center = true );	
+		// cylinder( r=coilUsableDiameter / 2, h=coilRadius, center = true );	
 	}
 }
 
@@ -297,7 +338,6 @@ module helmholtzCoil()
 			 	   height=coilFormerTotalThickness ); 
 	
 			// Print the coil top outer ring retainer
-			//color( [1, 0, 0] )
 			{
 				translate( coilFormerFlangeOffset )
 					donut( outerRadius=coilRadius + coilFormerFlangeHeight,
