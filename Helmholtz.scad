@@ -38,13 +38,17 @@ coilRadius						= 130;		// Coil Radius in mm's
 coilLayersNum                   = 8;
 coilWiresNum                    = 6;
 
+FUDGE_SIDE                      = 0.3;
+COIL_RADIUS_REFERENCE           = 130;
+SCALE_FACTOR                    = getScaleFactor();
+
 wireDiamNominal                 = 1.2;
 wireDiam				        = wireDiamNominal + 0.1;		// Wire diameter in mm's, note this includes insulation (insulation thickness varies)
-windingFudge			= 0.3;		// Fudge factor in mm's to add to the space for the coil to allow for 3D printer inaccuracy	
+windingFudge			= FUDGE_SIDE;		// Fudge factor in mm's to add to the space for the coil to allow for 3D printer inaccuracy	
 coilWindingWidth	            = wireDiam * (coilWiresNum + 0.5) + windingFudge;	// The space for the wire to fit in on the former
 coilWindingHeight               = wireDiam * coilLayersNum;
 coilFlangeHeightPad             = 3.0;
-coilFlangeWidth		        	= 3.0;		// The width of the flange
+coilFlangeWidth		        	= max(2.0, 3.0 * SCALE_FACTOR);
 
 // Bottom winding begins
 coilWindingRadiusInner          = coilRadius - coilWindingHeight / 2;
@@ -56,8 +60,8 @@ coilHomogeneousDiam				= coilRadius * 2/3;
 coilTotalThickness		= coilWindingWidth + coilFlangeWidth * 2;
 
 
-coilOuterRingThickness = 0.15 * coilWindingRadiusInner;
-coilInnerRingThickness = 0.3 * coilHomogeneousDiam;
+coilOuterRingThickness = 0.15 * coilWindingRadiusInner * getCoilRingsScaleFactor();
+coilInnerRingThickness = 0.3 * coilHomogeneousDiam * getCoilRingsScaleFactor();
 
 coilOuterRingBottomRadius = coilWindingRadiusInner - coilOuterRingThickness;
 
@@ -66,27 +70,27 @@ coilHomogeneousCenterRadius = coilHomogeneousDiam / 2 + coilInnerRingThickness /
 coilFlangeOffset			= [0, 0, (coilWindingWidth + coilFlangeWidth) / 2];
 
 // These settings effect parts of the total object
-retainerCoilHolderThickness	= 5;
+retainerCoilHolderThickness	= max(2.0, 5.0 * SCALE_FACTOR);
 retainerCoilHolderHeight    = (coilFlangeRadius - coilOuterRingBottomRadius) / 2;
-retainerWidth				= 10;
-retainerDepth				= 7;
+retainerWidth				= max(4.0, 10.0 * SCALE_FACTOR);
+retainerDepth				= max(2.0, 7.0 * SCALE_FACTOR);
 
-platformThickness		= 7;
-platformWidth			= 1.5 * coilRadius;		// It would make sense to make this wide enough to place the mounting posts outside of the coil for magnetic field uniformity reasons
+platformThickness		= 7.0 * SCALE_FACTOR;
+platformWidth			= 1.5 * coilRadius;
 
-wallUserHeight			= 20;
-wallUserThickness		= 4;
+wallUserHeight			= max(15.0, 20.0 * SCALE_FACTOR);
+wallUserThickness		= max(3.0, 4.0 * SCALE_FACTOR);
 wallUserHoleDiam		= 5.5;
 
 tableThickness				= coilInnerRingThickness;
-tablePostDiameter			= 10;
+pillarDiam			= 10 * SCALE_FACTOR;
 
 
 manifoldCorrection 				= .1;
 
-cylinderReinforcementFudge	= 0.3;
-cylinderReinforcementDiameter	= tablePostDiameter + 5 * 2; 
-cylinderReinforcementHeight	= 10;
+cylinderReinforcementFudge	= FUDGE_SIDE;
+cylinderReinforcementDiameter	= pillarDiam + 10 * SCALE_FACTOR; 
+cylinderReinforcementHeight	= 10 * SCALE_FACTOR;
 
 
 retainerPlatformLength = coilRadius + coilTotalThickness + retainerCoilHolderThickness * 2;
@@ -95,52 +99,64 @@ retainerAngleStep           = 30;
 retainerLocationAngles		= [-1.5 * retainerAngleStep, 1.5 * retainerAngleStep, 2.5 * retainerAngleStep, 3.5 * retainerAngleStep, 4.5 * retainerAngleStep];
 retainerLocationAnglesBlock	= [-retainerAngleStep / 2, retainerAngleStep / 2];
 
-platformOffsetZ			= - (coilFlangeRadius + platformThickness / 2);
+platformCenterZ			= - (coilFlangeRadius + platformThickness / 2);
 
 
-retainerFaceY = coilFlangeRadius * sin(0.5 * retainerAngleStep);
-retainerFaceYOutside = coilFlangeRadius * sin(retainerAngleStep);
+retainerCenterY = coilFlangeRadius * sin(0.5 * retainerAngleStep);
+pillarOutsideCenterY = getPillarOutsideCenterY();
 
 TABLE_INSIDE = coilRadius >= 150;
-tablePostOffsetX = 0.2 * coilRadius;
-tablePostOffsetY = TABLE_INSIDE ? retainerFaceY / 2 : retainerFaceYOutside;
-tableOffsetZ			= -(tableThickness / 2 + coilHomogeneousDiam / 2) + 0.15 * coilHomogeneousDiam;
+pillarCenterX = 0.2 * coilRadius;
+pillarCenterY = TABLE_INSIDE ? retainerCenterY / 2 : pillarOutsideCenterY;
+tableCenterZ			= -(tableThickness / 2 + coilHomogeneousDiam / 2) + 0.15 * coilHomogeneousDiam;
 
-tableCoilPad            = 3;
+tableCoilPad            = max(1.0, 3.0 * SCALE_FACTOR);
 tableWidth              = retainerPlatformLength - 2 * (coilTotalThickness + 2 * retainerCoilHolderThickness + tableCoilPad);
-tableHoleY              = sqrt(pow(coilHomogeneousCenterRadius, 2) - pow(tableOffsetZ, 2));
+tableHoleY              = sqrt(pow(coilHomogeneousCenterRadius, 2) - pow(tableCenterZ, 2));
 tableHoleSize = tableThickness / (2 * sqrt(2));
 
 
 coilTableSupportLen = retainerPlatformLength;
-coilTableSupportLenPadded = coilTableSupportLen + 20;
+coilTableSupportLenPadded = coilTableSupportLen + 20 * SCALE_FACTOR;
 
-wallUserWidth		= tableWidth;
-wallUserHoleOffset		    = 15; 
+tablePillarPad = tableThickness / 3;
+
+pillarHeight				= tableCenterZ - platformCenterZ + (platformThickness + tableThickness) / 2 - tablePillarPad;
+pillarCenterZ 		= platformCenterZ + (pillarHeight - platformThickness) / 2;
 
 
 $fn = 80;
 
-/*
+function getScaleFactor() = coilRadius > COIL_RADIUS_REFERENCE ? sqrt(coilRadius / COIL_RADIUS_REFERENCE) : coilRadius / COIL_RADIUS_REFERENCE;
+
+function getCoilRingsScaleFactor() = SCALE_FACTOR > 1 ? 1.0 / SCALE_FACTOR : 1.0;
+
+function getPillarOutsideCenterY() = ((platformWidth / 2 - wallUserThickness / 2) + retainerCenterY) / 2;
+
+echo(">>> Physical coil diameter ", 2 * coilFlangeRadius);
+
+
+
 drawPlatform();
-drawPlatformTable();
+%drawPlatformTable();
 drawRetainersOnScene();
 drawHelmholtzCoilsOnScene();
 drawCoilTableSupportOnScene();
-*/
+drawTablePillarsOnScene();
 
 //drawHelmholtzCoilFlat();
 //drawCoilTableSupportFlat();
 //drawRetainersFlat();
 
-bottomHalfHelmholtzCoil();
+//bottomHalfHelmholtzCoil();
 //topHalfHelmholtzCoil();
+
 
 module drawCoilTableSupportFlat() {
     for (i = [-1, 1]) {
         translate([0, i * tableHoleSize, 0])
         rotate([-45, 0, 0])
-        drawCoilTableSupport(length=coilTableSupportLenPadded, fudge=-0.4);
+        drawCoilTableSupport(length=coilTableSupportLenPadded);
     }
     
 }
@@ -148,8 +164,8 @@ module drawCoilTableSupportFlat() {
 
 module drawCoilTableSupportOnScene() {
     for (flipY = [-1, 1]) {
-        translate([0, flipY * tableHoleY, tableOffsetZ])
-        drawCoilTableSupport(length=coilTableSupportLenPadded, fudge=-0.4);
+        translate([0, flipY * tableHoleY, tableCenterZ])
+        drawCoilTableSupport(length=coilTableSupportLenPadded);
     }
 }
 
@@ -160,56 +176,102 @@ module drawCoilTableSupport(length=coilTableSupportLen, fudge=0) {
 }
 
 
+module drawTablePillarsOnScene() {
+    pillarR = pillarDiam / 2;
+    pillarMaterialThickness = max(2.0, pillarR * 0.35);
+    pillarRcut = pillarR - pillarMaterialThickness;
+    
+    for (flipY = [-1, 1]) {
+        for (flipX = [-1, 1]) {
+            translate( [flipX * pillarCenterX, flipY * pillarCenterY, pillarCenterZ] )
+            if (pillarRcut >= 1) {
+                donut(outerRadius=pillarR, innerRadius=pillarRcut, height=pillarHeight);
+            } else {
+                cylinder(r=pillarR, h=pillarHeight, center=true);
+            }
+        }
+    }
+}
+
+
 module drawPlatformTable()
 {
-	postHeight				= tableOffsetZ - platformOffsetZ + (platformThickness + tableThickness) / 2;
-	postHeightOffset 		= platformOffsetZ + (postHeight - platformThickness) / 2;
-    
-    tableSizeY = max(coilHomogeneousDiam, 2 * tablePostOffsetY + 2 * cylinderReinforcementDiameter);
+
+    tableSizeY = max(coilHomogeneousDiam + 2 * coilInnerRingThickness, 2 * pillarCenterY + 2 * cylinderReinforcementDiameter);
     
     tableDimensions			= [tableWidth, tableSizeY, tableThickness ];
-    tableMaterialThickness  = 4;
-    tableCutDimensions      = [tableDimensions[0] - 2 * tableMaterialThickness, tableDimensions[1] - 2 * tableMaterialThickness, tableDimensions[2] - 2 * tableMaterialThickness];
-  
-    difference() {
-        union() {
-            translate( [0, 0, tableOffsetZ] )
-            difference() {
-                cube( tableDimensions, center=true );
-                if (tableThickness >= 3 * tableMaterialThickness) {
-                    cube( tableCutDimensions, center=true );
-                }
-            }
-
+    tableMaterialThickness  = 4.0;
+    tableCutDimensions      = [tableDimensions[0] - 2 * tableMaterialThickness, 2 * pillarCenterY - cylinderReinforcementDiameter, tableDimensions[2] - 2 * tableMaterialThickness];
+    
+    module postReinforcement(reinforce)
+    {
+        for (flipX = [-1, 1]) {
             for (flipY = [-1, 1]) {
-                for (flipX = [-1, 1]) {
-                    translate( [flipX * tablePostOffsetX, flipY * tablePostOffsetY, postHeightOffset] )
-                    cylinder( r=tablePostDiameter / 2, h=postHeight - manifoldCorrection, center=true );
+                translate( [flipX * pillarCenterX, flipY * pillarCenterY, 0] )
+                if (reinforce) {
+                    translate( [0, 0, tableCenterZ - tableThickness / 2 - cylinderReinforcementHeight / 2 + manifoldCorrection] )
+                    tableReinforcement();
+                }
+                else {
+                    translate( [0, 0, tableCenterZ - tableThickness / 6] )
+                    %reinforcementFloorCut();
                 }
             }
         }
+    }
+    
+    module reinforcementFloorCut()
+    {
+        cylinder( r=pillarDiam / 2 + cylinderReinforcementFudge,
+                  h=tableThickness - tablePillarPad + 2 * manifoldCorrection,
+                  center=true ); 
+    }
+  
+    difference() {
+        union() {
+            translate( [0, 0, tableCenterZ] )
+            difference() {
+                %cube( tableDimensions, center=true );
+                if (tableThickness >= 3 * tableMaterialThickness) {
+                    %cube( tableCutDimensions, center=true );
+                }
+            }
+            
+            postReinforcement(true);
+        }
+        
+        postReinforcement(false);
         
         for (flipY = [-1, 1]) {
-            translate([0, flipY * tableHoleY, tableOffsetZ])
-            drawCoilTableSupport(fudge=0.2);
+            translate([0, flipY * tableHoleY, tableCenterZ])
+            drawCoilTableSupport(fudge=2 * FUDGE_SIDE);
         }
     }
 
 }
 
 
+module tableReinforcement()
+{
+    donut( outerRadius=cylinderReinforcementDiameter / 2,
+       innerRadius = pillarDiam / 2 + cylinderReinforcementFudge,
+       height=cylinderReinforcementHeight );
+}
+
+
 module drawPlatform()
 {
-
-	postReinforcementOffsetZ = platformOffsetZ + (platformThickness + cylinderReinforcementHeight) / 2;
-    
-
+	postReinforcementOffsetZ = platformCenterZ + (platformThickness + cylinderReinforcementHeight) / 2;
     
     // Wire hooks
     hookRadius = 2 * wireDiam + windingFudge;
     
     module wallUser()
     {
+        
+        wallUserWidth		= tableWidth;
+        wallUserHoleOffset		    = 15; 
+        
         wallUserOffset = [0, ( platformWidth - wallUserThickness ) / 2, ( wallUserHeight + platformThickness ) / 2 - manifoldCorrection];
         
         translate( wallUserOffset )
@@ -250,10 +312,10 @@ module drawPlatform()
             }
         }
         
-        
-        hookHalfWidth = 2.0;
+        hookThickness = 4.0;
+        hookHalfWidth = hookThickness / 2;
         padToCoil = 3.0;
-        hooksNum = 5;
+        hooksNum = ceil(5 * SCALE_FACTOR);
         hookRouter = hookRadius + hookHalfWidth;
         rangeUsable = coilRadius - 2 * (coilTotalThickness / 2 + padToCoil + hookHalfWidth);
         rangeStep = rangeUsable / (hooksNum - 1);
@@ -264,9 +326,12 @@ module drawPlatform()
             hook(hookRouter, hookHalfWidth);
         }
         
-        translate([0, retainerFaceYOutside, platformThickness / 2 - manifoldCorrection])
-        rotate([90, 0, 0])
-        torus(hookRouter, hookHalfWidth, 180);
+        if (2 * hookRouter + hookThickness < 2 * pillarCenterX - cylinderReinforcementDiameter) {
+            // Wall user hook fits on the platform
+            translate([0, pillarOutsideCenterY, platformThickness / 2 - manifoldCorrection])
+            rotate([90, 0, 0])
+            torus(hookRouter, hookHalfWidth, 180);
+        }
     }
     
     module platformRetainer(angle, hole=false)
@@ -281,24 +346,17 @@ module drawPlatform()
         platformRetainer(retainerLocationAnglesBlock[0]);
         difference() {
             platformRetainer(retainerLocationAnglesBlock[1]);
-            translate( [0, 0, platformOffsetZ] )
-            translate([0, retainerFaceY, platformThickness / 2 + hookRadius / 2 - manifoldCorrection])
+            translate( [0, 0, platformCenterZ] )
+            translate([0, retainerCenterY, platformThickness / 2 + hookRadius / 2 - manifoldCorrection])
             cube([2 * hookRadius, retainerWidth * 2, hookRadius], center=true);
         }
     }
     
-    module tableReinforcement()
-    {
-        translate( [0, 0, postReinforcementOffsetZ] )
-        donut( outerRadius=cylinderReinforcementDiameter / 2,
-           innerRadius = tablePostDiameter / 2 + cylinderReinforcementFudge,
-           height=cylinderReinforcementHeight );
-    }
-    
+
     module reinforcementFloorCut()
     {
         translate( [0, 0, postReinforcementOffsetZ - platformThickness / 2] )
-        cylinder( r=tablePostDiameter / 2 + cylinderReinforcementFudge,
+        cylinder( r=pillarDiam / 2 + cylinderReinforcementFudge,
                   h=platformThickness + cylinderReinforcementHeight + manifoldCorrection * 2,
                   center=true ); 
     }
@@ -307,8 +365,9 @@ module drawPlatform()
     {
         for (flipX = [-1, 1]) {
             for (flipY = [-1, 1]) {
-                translate( [flipX * tablePostOffsetX, flipY * tablePostOffsetY, 0] )
+                translate( [flipX * pillarCenterX, flipY * pillarCenterY, 0] )
                 if (reinforce) {
+                    translate( [0, 0, postReinforcementOffsetZ] )
                     tableReinforcement();
                 }
                 else {
@@ -323,7 +382,7 @@ module drawPlatform()
     {
         union()
 		{
-			translate( [0, 0, platformOffsetZ] )
+			translate( [0, 0, platformCenterZ] )
 			{
 				cube( [retainerPlatformLength, platformWidth, platformThickness], center=true );
                 wallUser();
@@ -348,10 +407,9 @@ module drawPlatform()
 
 
 
-module drawRetainersFlat()
-
+module drawRetainersFlat(extra_count=2)
 {
-    coilNumRetainers = len(retainerLocationAngles);
+    coilNumRetainers = len(retainerLocationAngles) + extra_count;
     retainersPad = 3.0;
 	for ( retainerNum = [1:coilNumRetainers] ) {
         translate( [0, retainerNum * (retainerWidth + retainersPad), 0] )
@@ -362,7 +420,6 @@ module drawRetainersFlat()
 
 
 module drawRetainersOnScene()
-
 {
 	for ( angle = retainerLocationAngles ) {
 		rotate( [angle, 0, 0] )
@@ -405,7 +462,7 @@ module drawHelmholtzCoilsOnScene()
 	{
 		translate( [0, 0, coilRadius / 2] )
         rotate( [180, 0, 0] )
-        helmholtzSingleCoil();
+        *helmholtzSingleCoil();
         
 		translate( [0, 0, -coilRadius / 2] )
         helmholtzSingleCoil();
@@ -525,7 +582,7 @@ module helmholtzSingleCoil()
             coilSpokeNum = 8;
             coilSpokeAngleStep = 360 / coilSpokeNum;
             coilSpokeAngleStart = coilSpokeAngleStep / 2;
-            coilSpokeDimensions	= [0.075 * coilRadius, coilSpokeLength, coilTotalThickness];
+            coilSpokeDimensions	= [0.075 * coilRadius, coilSpokeLength, coilTotalThickness - 2 * manifoldCorrection];
 
 			for ( angle = [coilSpokeAngleStart:coilSpokeAngleStep:360-coilSpokeAngleStart] ) {
 				rotate( [0, 0, angle] )
@@ -542,7 +599,7 @@ module helmholtzSingleCoil()
         
         for (flipZ = [-1, 1]) {
             for (flipY = [-1, 1]) {
-                translate([-tableOffsetZ, flipY * tableHoleY, flipZ * (coilTotalThickness / 2 + retainerCoilHolderThickness / 2 - manifoldCorrection)])
+                translate([-tableCenterZ, flipY * tableHoleY, flipZ * (coilTotalThickness / 2 + retainerCoilHolderThickness / 2 - manifoldCorrection)])
                 rotate([0, 0, 45])
                 cube([cubeReinforcementSize, cubeReinforcementSize, retainerCoilHolderThickness], center=true);
             }
@@ -558,9 +615,9 @@ module helmholtzSingleCoil()
         coilWireHole();
         
         for (flipY = [-1, 1]) {
-            translate([-tableOffsetZ, flipY * tableHoleY, 0])
+            translate([-tableCenterZ, flipY * tableHoleY, 0])
             rotate([0, 90, 0])
-            drawCoilTableSupport();
+            drawCoilTableSupport(fudge=2 * FUDGE_SIDE);
         }
 	}
 }
