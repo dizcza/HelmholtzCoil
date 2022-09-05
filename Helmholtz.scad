@@ -144,13 +144,14 @@ function getPillarFlipSingsX() = pillarCenterX > 0 ? [-1, 1] : [1];
 echo(">>> Physical coil diameter ", 2 * coilFlangeRadius);
 
 
-
+/*
 drawPlatform();
-%drawPlatformTable();
+drawPlatformTable();
 drawRetainersOnScene();
 drawHelmholtzCoilsOnScene();
 drawHorizontalBarSupportOnScene();
 drawTablePillarsOnScene();
+*/
 
 //drawHelmholtzCoilFlat();
 //drawHorizontalBarSupportFlat();
@@ -160,10 +161,90 @@ drawTablePillarsOnScene();
 //bottomHalfHelmholtzCoil();
 //topHalfHelmholtzCoil();
 
+drawTestParts();
 
-module drawHorizontalBarSupportFlat() {
-    for (i = [-1, 1]) {
-        translate([0, i * tableHoleSize, 0])
+
+module drawTestParts() {
+    
+    module testCoilHorizontalBarReinforcement() {
+        testLength = coilTotalThickness + 2 * retainerCoilHolderThickness;
+        
+        translate([30, 20, 0])
+        intersection() {
+            rotate([0, 0, 45])
+            translate([tableCenterZ, -tableHoleY, 0])
+            helmholtzSingleCoil();
+            
+            translate([0, 0, testLength / 2])
+            cube([0.7 * coilInnerRingThickness, 0.7 * coilInnerRingThickness, testLength], center=true);
+        }
+        
+        translate([0, -30, 0])
+        rotate([-45, 0, 0])
+        drawHorizontalBarSupport(length=testLength);
+    }
+    
+    module testWireHook() {
+        translate([0, 20, -platformCenterZ])
+        intersection() {
+            drawPlatform();
+            
+            translate( [0, 0, platformCenterZ + platformThickness] )
+            cube( [20, 20, 12], center=true );
+        }
+    }
+    
+    module testReinforcementCylinderAndPillar() {
+        translate([0, 50, 0])
+        drawReinforcementCylinder();
+        
+        translate([0, -15, 0])
+        rotate([0, 90, 0])
+        intersection() {
+            drawPillar();
+            cube([pillarDiam, pillarDiam, 2 * cylinderReinforcementHeight], center=true);
+        }
+    }
+    
+    module testCoilRetainer() {
+        translate([30, 0, 0])
+        rotate([90, 0, 0])
+        intersection() {
+            translate([coilRadius / 2, 0, 0])
+            drawRetainer();
+            cube([coilTotalThickness + 2 * retainerCoilHolderThickness, retainerWidth, 50], center=true);
+        }
+    }
+    
+    module testCoilHalfer() {
+        cutSize = 40;
+        
+        translate([-40, coilRadius, 0])
+        intersection() {
+            bottomHalfHelmholtzCoil();
+            translate([0, -coilRadius, 0])
+            cube(cutSize, center=true);
+        }
+        
+        translate([0, 70, 0])
+        intersection() {
+            topHalfHelmholtzCoil();
+            translate([0, -coilRadius, 0])
+            cube(cutSize, center=true);
+        }
+    }
+    
+    testCoilHorizontalBarReinforcement();
+    testWireHook();
+    testReinforcementCylinderAndPillar();
+    testCoilRetainer();
+    testCoilHalfer();
+}
+
+
+module drawHorizontalBarSupportFlat(extraCount=2) {
+    for (i = [1 : 2 + extraCount]) {
+        translate([0, i * 1.5 *  tableHoleSize, 0])
         rotate([-45, 0, 0])
         drawHorizontalBarSupport(length=HorizontalBarSupportLenPadded);
     }
@@ -231,11 +312,11 @@ module drawPlatformTable()
                 translate( [flipX * pillarCenterX, flipY * pillarCenterY, 0] )
                 if (reinforce) {
                     translate( [0, 0, tableCenterZ - tableThickness / 2 - cylinderReinforcementHeight / 2 + manifoldCorrection] )
-                    tableReinforcement();
+                    drawReinforcementCylinder();
                 }
                 else {
                     translate( [0, 0, tableCenterZ - tableThickness / 6] )
-                    %reinforcementFloorCut();
+                    reinforcementFloorCut();
                 }
             }
         }
@@ -244,7 +325,7 @@ module drawPlatformTable()
     module reinforcementFloorCut()
     {
         cylinder( r=pillarDiam / 2 + cylinderReinforcementFudge,
-                  h=tableThickness - tablePillarPad + 2 * manifoldCorrection,
+                  h=tableThickness - tablePillarPad + 2 * FUDGE_SIDE,
                   center=true ); 
     }
   
@@ -252,9 +333,9 @@ module drawPlatformTable()
         union() {
             translate( [0, 0, tableCenterZ] )
             difference() {
-                %cube( tableDimensions, center=true );
+                cube( tableDimensions, center=true );
                 if (tableThickness >= 3 * tableMaterialThickness) {
-                    %cube( tableCutDimensions, center=true );
+                    cube( tableCutDimensions, center=true );
                 }
             }
             
@@ -272,7 +353,7 @@ module drawPlatformTable()
 }
 
 
-module tableReinforcement()
+module drawReinforcementCylinder()
 {
     donut( outerRadius=cylinderReinforcementDiameter / 2,
        innerRadius = pillarDiam / 2 + cylinderReinforcementFudge,
@@ -396,7 +477,7 @@ module drawPlatform()
                 translate( [flipX * pillarCenterX, flipY * pillarCenterY, 0] )
                 if (reinforce) {
                     translate( [0, 0, postReinforcementOffsetZ] )
-                    tableReinforcement();
+                    drawReinforcementCylinder();
                 }
                 else {
                     reinforcementFloorCut();
@@ -435,9 +516,9 @@ module drawPlatform()
 
 
 
-module drawRetainersFlat(extra_count=2)
+module drawRetainersFlat(extraCount=2)
 {
-    coilNumRetainers = len(retainerLocationAngles) + extra_count;
+    coilNumRetainers = len(retainerLocationAngles) + extraCount;
     retainersPad = 3.0;
 	for ( retainerNum = [1:coilNumRetainers] ) {
         translate( [0, retainerNum * (retainerWidth + retainersPad), 0] )
@@ -568,7 +649,7 @@ module helmholtzSingleCoil()
     coilSpokeOffset				= [0, (coilHomogeneousDiam + coilSpokeLength + coilInnerRingThickness) / 2, 0];
     
     
-    module coilWireHole()
+    module coilWireEnterExitHole()
     {
         // Account for Litz wire soldering. Make the radius twice larger.
         holeRadius = wireDiam + windingFudge;
@@ -618,11 +699,11 @@ module helmholtzSingleCoil()
                 cube( coilSpokeDimensions, center=true);
             }
             
-            drawCoilTableReinforcement();
+            drawCoilHorizontalBarReinforcement();
 		}
     }
     
-    module drawCoilTableReinforcement() {
+    module drawCoilHorizontalBarReinforcement() {
         cubeReinforcementSize = 0.6 * coilInnerRingThickness;
         
         for (flipZ = [-1, 1]) {
@@ -640,7 +721,7 @@ module helmholtzSingleCoil()
         drawCoilSolid();
         
 		translate( [coilWindingRadiusInner, 0, (coilWindingWidth + coilFlangeWidth) / 2] )
-        coilWireHole();
+        coilWireEnterExitHole();
         
         for (flipY = [-1, 1]) {
             translate([-tableCenterZ, flipY * tableHoleY, 0])
