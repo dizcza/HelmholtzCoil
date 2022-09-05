@@ -34,7 +34,7 @@
 
 // All the following settings are metric except coilOhmsPerThousandFeet and control the magnetic strength, size of
 // the coil and statistics for the coil, they need to be set correctly
-coilRadius						= 500;		// Coil Radius in mm's
+coilRadius						= 130;		// Coil Radius in mm's
 coilLayersNum                   = 8;
 coilWiresNum                    = 6;
 
@@ -135,7 +135,7 @@ function getScaleFactor() = coilRadius > COIL_RADIUS_REFERENCE ? sqrt(coilRadius
 
 function getCoilRingsScaleFactor() = SCALE_FACTOR > 1 ? 1.0 / SCALE_FACTOR : 1.0;
 
-function getPillarCenterX() = let (centerX = 0.5 * (coilRadius / 2 - coilTotalThickness / 2 - retainerCoilHolderThickness)) centerX > 2 * cylinderReinforcementDiameter ? centerX : 0;
+function getPillarCenterX() = let (centerX = 0.5 * (coilRadius / 2 - coilTotalThickness / 2 - retainerCoilHolderThickness)) centerX > 1.5 * cylinderReinforcementDiameter ? centerX : 0;
 
 function getPillarFlipSingsX() = pillarCenterX > 0 ? [-1, 1] : [1];
 
@@ -337,7 +337,7 @@ module drawPlatform()
         
         hookThickness = 4.0;
         hookHalfWidth = hookThickness / 2;
-        padToCoil = 3.0;
+        padToCoil = 4.0;
         hooksNum = floor(5 * SCALE_FACTOR);
         hookRouter = hookRadius + hookHalfWidth;
         rangeUsable = coilRadius - 2 * (coilTotalThickness / 2 + padToCoil + hookHalfWidth);
