@@ -151,16 +151,34 @@ drawHelmholtzCoilsOnScene();
 drawHorizontalBarSupportOnScene();
 drawTablePillarsOnScene();
 
-
-//drawHelmholtzCoilFlat();
-//drawHorizontalBarSupportFlat();
-//drawRetainersFlat();
-//drawTablePillarsFlat();
-
 //bottomHalfHelmholtzCoil();
 //topHalfHelmholtzCoil();
 
 //drawTestParts();
+
+drawFlatPartsAll();
+
+
+module drawFlatPartsAll() {
+    //drawHelmholtzCoilFlat();
+    //drawHorizontalBarSupportFlat();
+    //drawRetainersFlat();
+    //drawTablePillarsFlat();
+    //drawPlatformTableFlat();
+    //drawPlatformFlat();
+    
+    module drawPlatformTableFlat() {
+        rotate([180, 0, 0])
+        translate([0, 0, -tableCenterZ])
+        drawPlatformTable();
+    }
+    
+    module drawPlatformFlat() {
+        translate([0, 0, -platformCenterZ])
+        drawPlatform();
+    }
+
+}
 
 
 module drawTestParts() {
