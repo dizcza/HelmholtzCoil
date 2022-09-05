@@ -11,6 +11,8 @@ Helmholtz coils contain a region of uniform magnetic field which is common used 
 
 ## 3D model
 
+[Helmholtz.scad](Helmholtz.scad)
+
 This project uses OpenScad which is a 3D Solid modeler for 3D printing. OpenScad has the advantage that it's a programming language, which lends itself to heavy customization. You can custom everything, and if you don't like it or need something else, then change it.
 
 The inner cylinder of the coils (the space that is 1/3 the diameter of coil), denotes the area of uniform magnetic field.
@@ -20,6 +22,8 @@ The platform for magnetic experiments is replaceable, so you can have switchable
 ![](screenshots/3dmodel.png)
 
 ## Simulation
+
+[helmholtz.py](helmholtz.py)
 
 ### Helmholtz Coil Configuration Statistics
 
