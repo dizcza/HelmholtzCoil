@@ -17,6 +17,7 @@ The inner cylinder of the coils (the space that is 1/3 the diameter of coil), de
 
 The platform for magnetic experiments is replaceable, so you can have switchable platforms for applications.
 
+![](screenshots/3dmodel.png)
 
 ## Simulation
 
@@ -52,7 +53,9 @@ $ python helmholtz.py
 ### Magpylib simulation
 
 The coil is simulated as a set of closed loop currents of the same direction (winding).
-On the figure below, the coils are oriented vertically (Z axis). The distance between the coil equals the coil radius (*Helmholtz coil*).
+On the figure below, the coils are oriented vertically (Z axis).
+The distance between the coil equals the coil radius (*Helmholtz coil*).
+Two wires connect the coils to simulate a real winding.
 
 ![](screenshots/plotly.png)
 

@@ -156,7 +156,7 @@ drawTablePillarsOnScene();
 
 //drawTestParts();
 
-drawFlatPartsAll();
+//drawFlatPartsAll();
 
 
 module drawFlatPartsAll() {
@@ -606,7 +606,7 @@ module drawHelmholtzCoilsOnScene()
 	{
 		translate( [0, 0, coilRadius / 2] )
         rotate( [180, 0, 0] )
-        *helmholtzSingleCoil();
+        helmholtzSingleCoil();
         
 		translate( [0, 0, -coilRadius / 2] )
         helmholtzSingleCoil();

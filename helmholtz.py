@@ -231,6 +231,11 @@ def calc_mechanical_tolerance(coil_rot=1., axis_dx=1.):
     Calculate tolerance error for the magnetic field B induced by coil
     misplacement and rotation.
 
+    See "Design and construction of a 3D Helmholtz coil system for the ALBA
+    magnetic measurements laboratory" by Andrea del Carme Fontanet Valls.
+
+    https://upcommons.upc.edu/bitstream/handle/2117/168009/Memoria_TFG-Andrea%20Fontanet.pdf?sequence=4&isAllowed=y
+
     Parameters
     ----------
     coil_rot : float
