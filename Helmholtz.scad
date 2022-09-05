@@ -76,7 +76,7 @@ retainerWidth				= max(4.0, 10.0 * SCALE_FACTOR);
 retainerDepth				= max(2.0, 7.0 * SCALE_FACTOR);
 
 platformThickness		= 7.0 * SCALE_FACTOR;
-platformWidth			= 2.0 * coilFlangeRadius;
+platformLength			= 2.0 * coilFlangeRadius;
 
 wallUserThickness		= max(3.0, 4.0 * SCALE_FACTOR);
 wallUserHoleDiam		= 5.5;
@@ -94,7 +94,7 @@ cylinderReinforcementHeight	= 10 * SCALE_FACTOR;
 retainerLength         = coilRadius + coilTotalThickness + 2 * retainerCoilHolderThickness;
 
 platformPad            = 10 * SCALE_FACTOR;
-platformLength         = retainerLength + 2 * platformPad;
+platformWidth         = retainerLength + 2 * platformPad;
 
 retainerAngleStep           = 30;
 retainerLocationAngles		= [-1.5 * retainerAngleStep, 1.5 * retainerAngleStep, 2.5 * retainerAngleStep, 3.5 * retainerAngleStep, 4.5 * retainerAngleStep];
@@ -144,14 +144,14 @@ function getPillarFlipSingsX() = pillarCenterX > 0 ? [-1, 1] : [1];
 echo(">>> Physical coil diameter ", 2 * coilFlangeRadius);
 
 
-/*
+
 drawPlatform();
 drawPlatformTable();
 drawRetainersOnScene();
 drawHelmholtzCoilsOnScene();
 drawHorizontalBarSupportOnScene();
 drawTablePillarsOnScene();
-*/
+
 
 //drawHelmholtzCoilFlat();
 //drawHorizontalBarSupportFlat();
@@ -161,7 +161,7 @@ drawTablePillarsOnScene();
 //bottomHalfHelmholtzCoil();
 //topHalfHelmholtzCoil();
 
-drawTestParts();
+//drawTestParts();
 
 
 module drawTestParts() {
@@ -376,7 +376,7 @@ module drawPlatform()
         wallUserWidth = 2 * wallUserHoleCenterX + wallUserHoleDiam + 2 * wallUserPad;
         wallUserHeight = max(15.0, 20.0 * SCALE_FACTOR);
         
-        wallUserOffset = [0, ( platformWidth - wallUserThickness ) / 2, ( wallUserHeight + platformThickness ) / 2 - manifoldCorrection];
+        wallUserOffset = [0, ( platformLength - wallUserThickness ) / 2, ( wallUserHeight + platformThickness ) / 2 - manifoldCorrection];
         
         translate( wallUserOffset )
         difference()
@@ -435,9 +435,19 @@ module drawPlatform()
             hook(0);
         }
         
-        if (2 * hookRouter + hookThickness < 2 * pillarCenterX - cylinderReinforcementDiameter) {
+        enoughSpaceBetweenPillarsHoriz = 2 * hookRouter + hookThickness < 2 * pillarCenterX - cylinderReinforcementDiameter;
+        
+        if (enoughSpaceBetweenPillarsHoriz) {
             // Wall user hook fits on the platform
             translate([0, pillarOutsideCenterY, platformThickness / 2 - manifoldCorrection])
+            rotate([90, 0, 0])
+            torus(hookRouter, hookHalfWidth, 180);
+        }
+        
+        spaceToWall = platformLength / 2 - wallUserThickness / 2 - pillarOutsideCenterY - cylinderReinforcementDiameter / 2;
+                
+        if (spaceToWall > 2 * cylinderReinforcementDiameter) {
+            translate([0, pillarOutsideCenterY + cylinderReinforcementDiameter / 2 + spaceToWall / 3, platformThickness / 2 - manifoldCorrection])
             rotate([90, 0, 0])
             torus(hookRouter, hookHalfWidth, 180);
         }
@@ -447,7 +457,7 @@ module drawPlatform()
     {
         rotate( [angle, 0, 0] )
         translate( [0, 0, -(coilFlangeRadius + retainerDepth / 2)] )
-        drawRetainer(length=platformLength - 2 * manifoldCorrection);
+        drawRetainer(length=platformWidth - 2 * manifoldCorrection);
     }
     
     module drawPlatformRetainers()
@@ -493,7 +503,7 @@ module drawPlatform()
 		{
 			translate( [0, 0, platformCenterZ] )
 			{
-				cube( [platformLength, platformWidth, platformThickness], center=true );
+				cube( [platformWidth, platformLength, platformThickness], center=true );
                 wallUser();
                 wireHooks();
 			}
