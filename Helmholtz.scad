@@ -143,7 +143,7 @@ function getPillarFlipSingsX() = pillarCenterX > 0 ? [-1, 1] : [1];
 echo(">>> Physical coil diameter ", 2 * coilFlangeRadius);
 echo(">>> Platform width ", platformWidth);
 
-partnum = 0;
+partnum = 9;
 
 if (partnum == 0) {
     drawPlatform();
@@ -185,7 +185,7 @@ module drawPlatformFlat() {
 module drawTestParts() {
     
     module testCoilHorizontalBarReinforcement() {
-        testLength = coilTotalThickness + 2 * retainerCoilHolderThickness;
+        testLength = coilTotalThickness / 2 + retainerCoilHolderThickness;
         
         translate([30, 20, 0])
         intersection() {
@@ -193,8 +193,7 @@ module drawTestParts() {
             translate([tableCenterZ, -tableHoleY, 0])
             helmholtzSingleCoil();
             
-            translate([0, 0, testLength / 2])
-            cube([0.7 * coilInnerRingThickness, 0.7 * coilInnerRingThickness, testLength], center=true);
+            cube([0.55 * coilInnerRingThickness, 0.55 * coilInnerRingThickness, testLength], center=true);
         }
         
         translate([0, -30, 0])
@@ -208,19 +207,21 @@ module drawTestParts() {
             drawPlatform();
             
             translate( [0, 0, platformCenterZ + platformThickness] )
-            cube( [20, 20, 12], center=true );
+            cube( [10, 20, 12], center=true );
         }
     }
     
     module testReinforcementCylinderAndPillar() {
+        cylinderThickness = cylinderReinforcementDiameter / 2 - pillarDiam / 2;
+        cylinderRadius = cylinderReinforcementDiameter / 2 - cylinderThickness / 2;
         translate([0, 50, 0])
-        drawReinforcementCylinder();
+        drawReinforcementCylinder(outerRadius=cylinderRadius);
         
         translate([0, -15, 0])
         rotate([0, 90, 0])
         intersection() {
             drawPillar();
-            cube([pillarDiam, pillarDiam, 2 * cylinderReinforcementHeight], center=true);
+            cube([pillarDiam, pillarDiam, cylinderReinforcementHeight], center=true);
         }
     }
     
@@ -230,12 +231,13 @@ module drawTestParts() {
         intersection() {
             translate([coilRadius / 2, 0, 0])
             drawRetainer();
-            cube([coilTotalThickness + 2 * retainerCoilHolderThickness, retainerWidth, 50], center=true);
+            translate([0, 0, retainerCoilHolderHeight / 2 + retainerCoilHolderThickness / 2])
+            cube([coilTotalThickness + retainerCoilHolderThickness + 2 * FUDGE_SIDE, retainerWidth, retainerCoilHolderHeight + retainerCoilHolderThickness], center=true);
         }
     }
     
     module testCoilHalfer() {
-        cutSize = 40;
+        cutSize = [30, 50, 50];
         
         translate([-40, coilRadius, 0])
         intersection() {
@@ -244,7 +246,7 @@ module drawTestParts() {
             cube(cutSize, center=true);
         }
         
-        translate([0, 70, 0])
+        translate([0, 65, 0])
         intersection() {
             topHalfHelmholtzCoil();
             translate([0, -coilRadius, 0])
@@ -371,9 +373,9 @@ module drawPlatformTable()
 }
 
 
-module drawReinforcementCylinder()
+module drawReinforcementCylinder(outerRadius=cylinderReinforcementDiameter / 2)
 {
-    donut( outerRadius=cylinderReinforcementDiameter / 2,
+    donut( outerRadius=outerRadius,
        innerRadius = pillarDiam / 2 + cylinderReinforcementFudge,
        height=cylinderReinforcementHeight );
 }
