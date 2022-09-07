@@ -638,16 +638,16 @@ module helmholtzCoilHalfer()
     
 	// Slices a helmholtz coil in half for 3D printing
 	rotate( [0, 0, -coilHalferRotataionFlangeAngle / 2] )
-		translate( coilHalferWireSpaceOffset )
-			cube( coilHalferWireSpaceDimensions, center = true );
+    translate( coilHalferWireSpaceOffset )
+    cube( coilHalferWireSpaceDimensions, center = true );
 
 	rotate( [0, 0, coilHalferRotataionFlangeAngle / 2] )
-		translate( coilHalferFlangeOffset1 )
-			cube( coilHalferFlangeDimensions, center = true );
+    translate( coilHalferFlangeOffset1 )
+    cube( coilHalferFlangeDimensions, center = true );
 
 	rotate( [0, 0, coilHalferRotataionFlangeAngle / 2] )
-		translate( coilHalferFlangeOffset2 )
-			cube( coilHalferFlangeDimensions, center = true );
+    translate( coilHalferFlangeOffset2 )
+    cube( coilHalferFlangeDimensions, center = true );
 }
 
 
@@ -672,9 +672,23 @@ module topHalfHelmholtzCoil()
         
         rotate( [0, 0, -90] )
         helmholtzCoilHalfer();
+        
+        drawCoilHorizontalBarReinforcement(fudge=2 * manifoldCorrection);
 	}
 }
 
+
+module drawCoilHorizontalBarReinforcement(fudge=0) {
+    cubeReinforcementSize = 0.6 * coilInnerRingThickness + fudge;
+    
+    for (flipZ = [-1, 1]) {
+        for (flipY = [-1, 1]) {
+            translate([-tableCenterZ, flipY * tableHoleY, flipZ * (coilTotalThickness / 2 + retainerCoilHolderThickness / 2 - manifoldCorrection)])
+            rotate([0, 0, 45])
+            cube([cubeReinforcementSize, cubeReinforcementSize, retainerCoilHolderThickness + fudge], center=true);
+        }
+    }
+}
 
 
 module helmholtzSingleCoil()
@@ -704,7 +718,7 @@ module helmholtzSingleCoil()
         union()
 		{
 			// Print the outer ring (where the coil gets wrapped around)
-			donut( outerRadius=coilWindingRadiusInner, innerRadius = coilOuterRingBottomRadius, height=coilWindingWidth ); 
+			donut( outerRadius=coilWindingRadiusInner, innerRadius = coilOuterRingBottomRadius, height=coilWindingWidth + 2 * manifoldCorrection ); 
 
 			// Print the inner ring (homogeneous volume)
 			donut( outerRadius=coilHomogeneousDiam / 2 + coilInnerRingThickness,
@@ -729,6 +743,7 @@ module helmholtzSingleCoil()
             coilSpokeAngleStart = coilSpokeAngleStep / 2;
             coilSpokeDimensions	= [0.075 * coilRadius, coilSpokeLength, coilTotalThickness - 2 * manifoldCorrection];
 
+            
 			for ( angle = [coilSpokeAngleStart:coilSpokeAngleStep:360-coilSpokeAngleStart] ) {
 				rotate( [0, 0, angle] )
                 translate( coilSpokeOffset )
@@ -737,18 +752,6 @@ module helmholtzSingleCoil()
             
             drawCoilHorizontalBarReinforcement();
 		}
-    }
-    
-    module drawCoilHorizontalBarReinforcement() {
-        cubeReinforcementSize = 0.6 * coilInnerRingThickness;
-        
-        for (flipZ = [-1, 1]) {
-            for (flipY = [-1, 1]) {
-                translate([-tableCenterZ, flipY * tableHoleY, flipZ * (coilTotalThickness / 2 + retainerCoilHolderThickness / 2 - manifoldCorrection)])
-                rotate([0, 0, 45])
-                cube([cubeReinforcementSize, cubeReinforcementSize, retainerCoilHolderThickness], center=true);
-            }
-        }
     }
 
 
@@ -773,6 +776,6 @@ module donut(outerRadius, innerRadius, height)
 	difference()
 	{
 		cylinder( r=outerRadius, h = height, center = true);
-		cylinder( r=innerRadius, h = height + 20 * manifoldCorrection, center = true);
+		cylinder( r=innerRadius, h = height + 2 * manifoldCorrection, center = true);
 	}
 }
