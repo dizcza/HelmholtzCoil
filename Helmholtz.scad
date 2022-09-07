@@ -141,43 +141,44 @@ function getPillarFlipSingsX() = pillarCenterX > 0 ? [-1, 1] : [1];
 
 
 echo(">>> Physical coil diameter ", 2 * coilFlangeRadius);
+echo(">>> Platform width ", platformWidth);
+
+partnum = 0;
+
+if (partnum == 0) {
+    drawPlatform();
+    drawPlatformTable();
+    drawRetainersOnScene();
+    drawHelmholtzCoilsOnScene();
+    drawHorizontalBarSupportOnScene();
+    drawTablePillarsOnScene();
+}
+
+/* FLAT COILS */
+if (partnum == 1) bottomHalfHelmholtzCoil();
+if (partnum == 2) topHalfHelmholtzCoil();
+if (partnum == 3) drawHelmholtzCoilFlat();
+
+/* FLAT REST OF THE MODELS */
+if (partnum == 4) drawHorizontalBarSupportFlat();
+if (partnum == 5) drawRetainersFlat();
+if (partnum == 6) drawTablePillarsFlat();
+if (partnum == 7) drawPlatformTableFlat();
+if (partnum == 8) drawPlatformFlat();
+
+if (partnum == 9) drawTestParts();
 
 
-
-drawPlatform();
-drawPlatformTable();
-drawRetainersOnScene();
-drawHelmholtzCoilsOnScene();
-drawHorizontalBarSupportOnScene();
-drawTablePillarsOnScene();
-
-//bottomHalfHelmholtzCoil();
-//topHalfHelmholtzCoil();
-
-//drawTestParts();
-
-//drawFlatPartsAll();
+module drawPlatformTableFlat() {
+    rotate([180, 0, 0])
+    translate([0, 0, -tableCenterZ])
+    drawPlatformTable();
+}
 
 
-module drawFlatPartsAll() {
-    //drawHelmholtzCoilFlat();
-    //drawHorizontalBarSupportFlat();
-    //drawRetainersFlat();
-    //drawTablePillarsFlat();
-    //drawPlatformTableFlat();
-    //drawPlatformFlat();
-    
-    module drawPlatformTableFlat() {
-        rotate([180, 0, 0])
-        translate([0, 0, -tableCenterZ])
-        drawPlatformTable();
-    }
-    
-    module drawPlatformFlat() {
-        translate([0, 0, -platformCenterZ])
-        drawPlatform();
-    }
-
+module drawPlatformFlat() {
+    translate([0, 0, -platformCenterZ])
+    drawPlatform();
 }
 
 
@@ -775,5 +776,3 @@ module donut(outerRadius, innerRadius, height)
 		cylinder( r=innerRadius, h = height + 20 * manifoldCorrection, center = true);
 	}
 }
-	
-
