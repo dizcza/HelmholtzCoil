@@ -82,15 +82,15 @@ platformLength			= 2.0 * coilFlangeRadius;
 wallUserThickness		= max(3.0, 4.0 * SCALE_FACTOR_SQRT);
 wallUserHoleDiam		= 4.5 + FUDGE_SIDE;  // M4 nut
 
-tableThickness				= coilInnerRingThickness;
-pillarDiam			= 10 * SCALE_FACTOR_SQRT;
+tableThickness				= 0.5 * coilInnerRingThickness;
+pillarDiam			        = 10 * SCALE_FACTOR_SQRT;
 
 
 manifoldCorrection 				= .1;
 
 cylinderReinforcementFudge	= FUDGE_SIDE;
 cylinderReinforcementDiameter	= pillarDiam + 10 * SCALE_FACTOR_SQRT; 
-cylinderReinforcementHeight	= 10 * SCALE_FACTOR_SQRT;
+cylinderReinforcementHeight	= platformThickness;
 
 retainerLength         = coilRadius + coilTotalThickness + 2 * retainerCoilHolderThickness;
 
@@ -112,8 +112,8 @@ pillarCenterX = getPillarCenterX();
 pillarCenterY = TABLE_INSIDE ? retainerCenterY / 2 : pillarOutsideCenterY;
 tableCenterZ			= -(tableThickness / 2 + coilHomogeneousDiam / 2) + 0.15 * coilHomogeneousDiam;
 
-tableCoilPad            = max(1.0, 3.0 * SCALE_FACTOR_SQRT);
-tableWidth              = retainerLength - 2 * (coilTotalThickness + 2 * retainerCoilHolderThickness + tableCoilPad);
+tableCoilPad            = max(1.0, 5.0 * SCALE_FACTOR_SQRT);
+tableWidth              = coilRadius - coilTotalThickness - 2 * tableCoilPad;
 tableHoleY              = sqrt(pow(coilHomogeneousRingCenterRadius, 2) - pow(tableCenterZ, 2));
 tableHoleSize = tableThickness / (2 * sqrt(2));
 
@@ -134,12 +134,12 @@ $fn = 80;
 
 function getScaleFactor() = coilRadius > COIL_RADIUS_REFERENCE ? pow(SCALE_FACTOR, 0.75) : SCALE_FACTOR;
 
-function getPillarCenterX() = let (centerX = 0.5 * (coilRadius / 2 - coilTotalThickness / 2 - retainerCoilHolderThickness)) centerX > 1.5 * cylinderReinforcementDiameter ? centerX : 0;
+function getPillarCenterX() = let (centerX = 0.5 * (coilRadius / 2 - coilTotalThickness / 2)) centerX > 1.5 * cylinderReinforcementDiameter ? centerX : 0;
 
 function getPillarFlipSingsX() = pillarCenterX > 0 ? [-1, 1] : [1];
 
 
-partnum = 0;
+partnum = 9;
 
 if (partnum == 0) {
     echo(">>> Physical coil diameter (same as platform length) ", 2 * coilFlangeRadius);
@@ -184,7 +184,8 @@ module drawPlatformFlat() {
 module drawTestParts() {
     
     module testCoilHorizontalBarReinforcement() {
-        testLength = coilTotalThickness / 2 + retainerCoilHolderThickness;
+        testLength = coilTotalThickness / 2;
+        cubeCutSize = tableHoleSize + 3;
         
         translate([30, 20, 0])
         intersection() {
@@ -192,7 +193,7 @@ module drawTestParts() {
             translate([tableCenterZ, -tableHoleY, 0])
             helmholtzSingleCoil();
             
-            cube([0.55 * coilInnerRingThickness, 0.55 * coilInnerRingThickness, testLength], center=true);
+            cube([cubeCutSize, cubeCutSize, testLength], center=true);
         }
         
         translate([0, -30, 0])
@@ -270,8 +271,8 @@ module drawTestParts() {
 }
 
 
-module drawHorizontalBarSupportFlat(extraCount=2) {
-    for (i = [1 : 2 + extraCount]) {
+module drawHorizontalBarSupportFlat() {
+    for (i = [1 : 2]) {
         translate([0, i * 1.5 *  tableHoleSize, 0])
         rotate([-45, 0, 0])
         drawHorizontalBarSupport(length=HorizontalBarSupportLenPadded);
@@ -330,8 +331,6 @@ module drawPlatformTable()
     tableSizeY = max(coilHomogeneousDiam + 2 * coilInnerRingThickness, 2 * pillarCenterY + 2 * cylinderReinforcementDiameter);
     
     tableDimensions			= [tableWidth, tableSizeY, tableThickness ];
-    tableMaterialThickness  = 4.0;
-    tableCutDimensions      = [tableDimensions[0] - 2 * tableMaterialThickness, 2 * pillarCenterY - cylinderReinforcementDiameter, tableDimensions[2] - 2 * tableMaterialThickness];
     
     module postReinforcement(reinforce)
     {
@@ -356,16 +355,28 @@ module drawPlatformTable()
                   h=tableThickness - tablePillarPad + 2 * FUDGE_SIDE,
                   center=true ); 
     }
+    
+    module drawTableHorizontalBarReinforcement() {
+        cubeReinforcementSize = tableThickness / sqrt(2) - 2 * manifoldCorrection;
+        cubeReinforcementPadToCoil = 2 * FUDGE_SIDE;  // pad to coil from the reinf block
+        cubeReinforcementHeight = tableCoilPad - cubeReinforcementPadToCoil;
+
+        for (flipX = [-1, 1]) {
+            for (flipY = [-1, 1]) {
+                translate([flipX * (tableWidth / 2 + cubeReinforcementHeight / 2 - manifoldCorrection), flipY * tableHoleY, tableCenterZ])
+                rotate([45, 0, 0])
+                cube([tableCoilPad, cubeReinforcementSize, cubeReinforcementSize], center=true);
+            }
+        }
+    }
+
   
     difference() {
         union() {
             translate( [0, 0, tableCenterZ] )
-            difference() {
-                cube( tableDimensions, center=true );
-                if (tableThickness >= 3 * tableMaterialThickness) {
-                    cube( tableCutDimensions, center=true );
-                }
-            }
+            cube( tableDimensions, center=true );
+            
+            drawTableHorizontalBarReinforcement();
             
             postReinforcement(true);
         }
@@ -562,7 +573,7 @@ module drawPlatform()
 
 
 
-module drawRetainersFlat(extraCount=2)
+module drawRetainersFlat(extraCount=1)
 {
     coilNumRetainers = len(retainerLocationAngles) + extraCount;
     retainersPad = 3.0;
@@ -682,22 +693,7 @@ module topHalfHelmholtzCoil()
         
         rotate( [0, 0, -90] )
         helmholtzCoilHalfer();
-        
-        drawCoilHorizontalBarReinforcement(fudge=2 * manifoldCorrection);
 	}
-}
-
-
-module drawCoilHorizontalBarReinforcement(fudge=0) {
-    cubeReinforcementSize = 0.6 * coilInnerRingThickness + fudge;
-    
-    for (flipZ = [-1, 1]) {
-        for (flipY = [-1, 1]) {
-            translate([-tableCenterZ, flipY * tableHoleY, flipZ * (coilTotalThickness / 2 + retainerCoilHolderThickness / 2 - manifoldCorrection)])
-            rotate([0, 0, 45])
-            cube([cubeReinforcementSize, cubeReinforcementSize, retainerCoilHolderThickness + fudge], center=true);
-        }
-    }
 }
 
 
@@ -760,7 +756,6 @@ module helmholtzSingleCoil()
                 cube( coilSpokeDimensions, center=true);
             }
             
-            drawCoilHorizontalBarReinforcement();
 		}
     }
 
