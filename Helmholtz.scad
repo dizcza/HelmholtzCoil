@@ -80,7 +80,7 @@ platformThickness		= 7.0 * SCALE_FACTOR_SQRT;
 platformLength			= 2.0 * coilFlangeRadius;
 
 wallUserThickness		= max(3.0, 4.0 * SCALE_FACTOR_SQRT);
-wallUserHoleDiam		= 5.5;
+wallUserHoleDiam		= 4.5 + FUDGE_SIDE;  // M4 nut
 
 tableThickness				= coilInnerRingThickness;
 pillarDiam			= 10 * SCALE_FACTOR_SQRT;
@@ -139,13 +139,12 @@ function getPillarCenterX() = let (centerX = 0.5 * (coilRadius / 2 - coilTotalTh
 function getPillarFlipSingsX() = pillarCenterX > 0 ? [-1, 1] : [1];
 
 
-
-echo(">>> Physical coil diameter ", 2 * coilFlangeRadius);
-echo(">>> Platform width ", platformWidth);
-
-partnum = 9;
+partnum = 0;
 
 if (partnum == 0) {
+    echo(">>> Physical coil diameter (same as platform length) ", 2 * coilFlangeRadius);
+    echo(">>> Platform width ", platformWidth);
+
     drawPlatform();
     drawPlatformTable();
     drawRetainersOnScene();
@@ -218,7 +217,6 @@ module drawTestParts() {
         drawReinforcementCylinder(outerRadius=cylinderRadius);
         
         translate([0, -15, 0])
-        rotate([0, 90, 0])
         intersection() {
             drawPillar();
             cube([pillarDiam, pillarDiam, cylinderReinforcementHeight], center=true);
@@ -254,11 +252,21 @@ module drawTestParts() {
         }
     }
     
+    module testWallBananaPlugHole() {
+        bananaPlugWallSpace = 1.5;
+        translate([-20, -20, 0])
+        difference() {
+            cube([wallUserHoleDiam + 2 * bananaPlugWallSpace, wallUserHoleDiam + 2 * bananaPlugWallSpace, wallUserThickness], center=true);
+            cylinder(r=wallUserHoleDiam / 2, h = wallUserThickness + 2 * manifoldCorrection, center = true);
+        }
+    }
+    
     testCoilHorizontalBarReinforcement();
     testWireHook();
     testReinforcementCylinderAndPillar();
     testCoilRetainer();
     testCoilHalfer();
+    testWallBananaPlugHole();
 }
 
 
