@@ -31,7 +31,6 @@
 //		Note the bottom of each coil has a small hole for the wire to go through, when assembling coil halves, make sure you have that
 //		hole in each assembled coil.
 
-
 // All the following settings are metric except coilOhmsPerThousandFeet and control the magnetic strength, size of
 // the coil and statistics for the coil, they need to be set correctly
 coilRadius						= 130;		// Coil Radius in mm's
@@ -72,6 +71,7 @@ coilFlangeOffset			= [0, 0, (coilWindingWidth + coilFlangeWidth) / 2];
 
 // These settings effect parts of the total object
 retainerCoilHolderThickness	= max(2.0, 5.0 * SCALE_FACTOR);
+retainerCoilHolderThicknessBottom = 1.5 * retainerCoilHolderThickness;
 retainerCoilHolderHeight    = (coilFlangeRadius - coilOuterRingBottomRadius) / 2;
 retainerWidth				= max(4.0, 10.0 * SCALE_FACTOR);
 retainerDepth				= max(2.0, 7.0 * SCALE_FACTOR_SQRT);
@@ -80,7 +80,7 @@ platformThickness		= 7.0 * SCALE_FACTOR_SQRT;
 platformLength			= 2.0 * coilFlangeRadius;
 
 wallUserThickness		= max(3.0, 4.0 * SCALE_FACTOR_SQRT);
-wallUserHoleDiam		= 4.5 + FUDGE_SIDE;  // M4 nut
+wallUserHoleDiam		= 4.0 + FUDGE_SIDE;  // M4 nut
 
 tableThickness				= 0.5 * coilInnerRingThickness;
 pillarDiam			        = 10 * SCALE_FACTOR_SQRT;
@@ -92,7 +92,7 @@ cylinderReinforcementFudge	= FUDGE_SIDE;
 cylinderReinforcementDiameter	= pillarDiam + 10 * SCALE_FACTOR_SQRT; 
 cylinderReinforcementHeight	= platformThickness;
 
-retainerLength         = coilRadius + coilTotalThickness + 2 * retainerCoilHolderThickness;
+retainerLength         = coilRadius + coilTotalThickness + 2 * retainerCoilHolderThicknessBottom;
 
 platformPad            = 10 * SCALE_FACTOR_SQRT;
 platformWidth         = retainerLength + 2 * platformPad;
@@ -139,7 +139,7 @@ function getPillarCenterX() = let (centerX = 0.5 * (coilRadius / 2 - coilTotalTh
 function getPillarFlipSingsX() = pillarCenterX > 0 ? [-1, 1] : [1];
 
 
-partnum = 9;
+partnum = 0;
 
 if (partnum == 0) {
     echo(">>> Physical coil diameter (same as platform length) ", 2 * coilFlangeRadius);
@@ -269,6 +269,7 @@ module drawTestParts() {
     testCoilHalfer();
     testWallBananaPlugHole();
 }
+
 
 
 module drawHorizontalBarSupportFlat() {
@@ -500,7 +501,7 @@ module drawPlatform()
         intersection() {
             rotate( [angle, 0, 0] )
             translate( [0, 0, -(coilFlangeRadius + depth / 2)] )
-            drawRetainer(length=platformWidth - 2 * manifoldCorrection, depth=depth);
+            drawRetainer(length=platformWidth - 2 * manifoldCorrection, depth=depth, blockThickness=retainerCoilHolderThicknessBottom);
             
             translate([0, 0, platformCenterZ / 2])
             cube( [platformWidth, platformLength, abs(platformCenterZ)], center=true );
@@ -596,21 +597,21 @@ module drawRetainersOnScene()
 
 
 
-module drawRetainer(length=retainerLength, depth=retainerDepth)
+module drawRetainer(length=retainerLength, depth=retainerDepth, blockThickness=retainerCoilHolderThickness)
 {
 	cube( [length, retainerWidth, depth], center=true );
 	translate( [coilRadius / 2, 0, 0] )
-		retainerBlocks();
+		retainerBlocks(thickness=blockThickness);
 	translate( [-coilRadius / 2, 0, 0] )
-		retainerBlocks();
+		retainerBlocks(thickness=blockThickness);
 }
 
 
-module retainerBlocks()
+module retainerBlocks(thickness=retainerCoilHolderThickness)
 {
-    retainerBlockDimensions		= [retainerCoilHolderThickness - 2 * FUDGE_SIDE, retainerWidth, retainerCoilHolderHeight];
+    retainerBlockDimensions		= [thickness - 2 * FUDGE_SIDE, retainerWidth, retainerCoilHolderHeight];
     
-    retainerBlockOffset1		= [(coilTotalThickness + retainerCoilHolderThickness) / 2 + FUDGE_SIDE, 0, (retainerDepth + retainerCoilHolderHeight) / 2 - manifoldCorrection];
+    retainerBlockOffset1		= [(coilTotalThickness + thickness) / 2 + FUDGE_SIDE, 0, (retainerDepth + retainerCoilHolderHeight) / 2 - manifoldCorrection];
     retainerBlockOffset2		= [- retainerBlockOffset1[0], retainerBlockOffset1[1], retainerBlockOffset1[2]];
     
 	translate( retainerBlockOffset1 )
@@ -784,3 +785,4 @@ module donut(outerRadius, innerRadius, height)
 		cylinder( r=innerRadius, h = height + 2 * manifoldCorrection, center = true);
 	}
 }
+
