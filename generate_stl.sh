@@ -6,7 +6,7 @@
 
 mkdir -p stl
 
-partnames=("HelmholtzAssembled" "CoilHalf1" "CoilHalf2" "CoilFull" "HorizontalBarsSupport" "Retainers" "Pillars" "PlatformTable" "Platform" "TestParts")
+partnames=("HelmholtzAssembled" "CoilHalf1" "CoilHalf2" "CoilFull" "HorizontalBarsSupport" "Retainers" "Pillars" "PlatformTable" "Platform" "TestParts" "M4_nut" "M4_thread_test")
 
 openscad_bin="openscad"
 
@@ -15,7 +15,7 @@ if [ $# -eq 1 ] && [ $1 == "--fast" ]; then
     openscad_bin="$openscad_bin --enable fast-csg --enable fast-csg-trust-corefinement"
 fi
 
-for partnum in `seq 0 9`
+for partnum in `seq 1 11`
 do
     echo "generating part $partnum ..."
     $openscad_bin Helmholtz.scad -o "stl/part${partnum}_${partnames[$partnum]}.stl" -D partnum=$partnum
