@@ -144,13 +144,13 @@ function getPillarCenterX() = let (centerX = 0.5 * (coilRadius / 2 - coilTotalTh
 function getPillarFlipSingsX() = pillarCenterX > 0 ? [-1, 1] : [1];
 
 
-partnum = 11;
+partnum = 8;
 
 if (partnum == 0) {
     echo(">>> Physical coil diameter (same as platform length) ", 2 * coilFlangeRadius);
     echo(">>> Platform width ", platformWidth);
 
-    drawPlatform();
+    translate([0, 0, platformCenterZ]) drawPlatform();
     translate([0, 0, tableCenterZ]) drawPlatformTable();
     drawRetainersOnScene();
     drawHelmholtzCoilsOnScene();
@@ -169,7 +169,7 @@ if (partnum == 4) drawHorizontalBarSupport();  // 2 pcs
 if (partnum == 5) drawRetainersFlat();
 if (partnum == 6) rotate([0, 90, 0]) drawPillar();  // 2 pcs
 if (partnum == 7) rotate([180, 0, 0]) drawPlatformTable();
-if (partnum == 8) translate([0, 0, -platformCenterZ]) drawPlatform();
+if (partnum == 8) drawPlatform();
 if (partnum == 9) drawTestParts();
 if (partnum == 10) M4_nut();  // 4 pcs
 if (partnum == 11) rotate([0, 90, 0]) M4_thread(length=2*nutHeight);
@@ -178,11 +178,11 @@ if (partnum == 11) rotate([0, 90, 0]) M4_thread(length=2*nutHeight);
 module drawTestParts() {
    
     module testWireHook() {
-        translate([0, 20, -platformCenterZ])
+        translate([0, 20, 0])
         intersection() {
             drawPlatform();
             
-            translate( [0, 0, platformCenterZ + platformThickness] )
+            translate( [0, 0, platformThickness] )
             cube( [10, 20, 12], center=true );
         }
     }
@@ -390,7 +390,7 @@ module drawReinforcementCylinder(outerRadius=cylinderReinforcementDiameter / 2)
 
 module drawPlatform()
 {
-	postReinforcementOffsetZ = platformCenterZ + (platformThickness + cylinderReinforcementHeight) / 2;
+	postReinforcementOffsetZ = (platformThickness + cylinderReinforcementHeight) / 2;
     
     // Wire hooks
     hookRadius = 2 * wireDiam + windingFudge;
@@ -486,12 +486,14 @@ module drawPlatform()
         depthMax = coilFlangeRadius / cos(angle) - coilFlangeRadius + retainerWidth / 2 * tan(abs(angle));
         depth = max(retainerDepth, depthMax);
         intersection() {
+            translate( [0, 0, -platformCenterZ] )
             rotate( [angle, 0, 0] )
-            translate( [0, 0, -(coilFlangeRadius + depth / 2)] )
+            translate([0, 0, -(coilFlangeRadius + depth / 2)])
             drawRetainer(length=platformWidth - 2 * manifoldCorrection, depth=depth, blockThickness=retainerCoilHolderThicknessBottom);
             
-            translate([0, 0, platformCenterZ / 2])
+            translate([0, 0, -platformCenterZ / 2])
             cube( [platformWidth, platformLength, abs(platformCenterZ)], center=true );
+
         }
     }
     
@@ -500,7 +502,6 @@ module drawPlatform()
         platformRetainer(retainerLocationAnglesBlock[0]);
         difference() {
             platformRetainer(retainerLocationAnglesBlock[1]);
-            translate( [0, 0, platformCenterZ] )
             translate([0, retainerCenterY, platformThickness / 2 + hookRadius / 2 - manifoldCorrection])
             cube([2 * hookRadius, retainerWidth * 2, hookRadius], center=true);
         }
@@ -536,7 +537,6 @@ module drawPlatform()
     {
         union()
 		{
-			translate( [0, 0, platformCenterZ] )
 			{
 				cube( [platformWidth, platformLength, platformThickness], center=true );
                 wallUser();
