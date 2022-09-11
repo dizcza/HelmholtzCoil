@@ -144,7 +144,7 @@ function getPillarCenterX() = let (centerX = 0.5 * (coilRadius / 2 - coilTotalTh
 function getPillarFlipSingsX() = pillarCenterX > 0 ? [-1, 1] : [1];
 
 
-partnum = 8;
+partnum = 11;
 
 if (partnum == 0) {
     echo(">>> Physical coil diameter (same as platform length) ", 2 * coilFlangeRadius);
@@ -166,7 +166,7 @@ if (partnum == 3) drawHelmholtzCoilFlat();
 
 /* FLAT REST OF THE MODELS */
 if (partnum == 4) drawHorizontalBarSupport();  // 2 pcs
-if (partnum == 5) drawRetainersFlat();
+if (partnum == 5) drawRetainer();  // 4 pcs
 if (partnum == 6) rotate([0, 90, 0]) drawPillar();  // 2 pcs
 if (partnum == 7) rotate([180, 0, 0]) drawPlatformTable();
 if (partnum == 8) drawPlatform();
@@ -558,19 +558,6 @@ module drawPlatform()
         postReinforcement(false);
 	}
 }
-
-
-
-module drawRetainersFlat(extraCount=1)
-{
-    coilNumRetainers = len(retainerLocationAngles) + extraCount;
-    retainersPad = 3.0;
-	for ( retainerNum = [1:coilNumRetainers] ) {
-        translate( [0, retainerNum * (retainerWidth + retainersPad), 0] )
-        drawRetainer();
-    }
-}
-
 
 
 module drawRetainersOnScene()
