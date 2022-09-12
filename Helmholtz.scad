@@ -48,7 +48,7 @@ SCALE_FACTOR_SQRT               = getScaleFactor();
 wireDiamNominal                 = 1.2;
 wireDiam				        = wireDiamNominal + 0.1;		// Wire diameter in mm's, note this includes insulation (insulation thickness varies)
 windingFudge			= FUDGE_SIDE;		// Fudge factor in mm's to add to the space for the coil to allow for 3D printer inaccuracy	
-coilWindingWidth	            = wireDiam * (coilWiresNum + 0.5) + windingFudge;	// The space for the wire to fit in on the former
+coilWindingWidth	            = wireDiam * coilWiresNum + windingFudge;	// The space for the wire to fit in on the former
 coilWindingHeight               = wireDiam * coilLayersNum;
 coilFlangeHeightPad             = 3.0;
 coilFlangeWidth		        	= max(2.0, 3.0 * SCALE_FACTOR_SQRT);
@@ -90,7 +90,7 @@ pillarDiam			        = 10 * SCALE_FACTOR_SQRT;
 
 manifoldCorrection 				= .1;
 
-cylinderReinforcementFudge	= FUDGE_SIDE;
+cylinderFudge	= 0.4;
 cylinderReinforcementDiameter	= pillarDiam + 10 * SCALE_FACTOR_SQRT; 
 cylinderReinforcementHeight	= platformThickness;
 
@@ -118,6 +118,7 @@ tableCoilPad            = max(2.0, 10.0 * SCALE_FACTOR_SQRT);
 tableWidth              = coilRadius - coilTotalThickness - 2 * tableCoilPad;
 tableHoleY              = sqrt(pow(coilHomogeneousRingCenterRadius, 2) - pow(tableCenterZ, 2));
 tableHoleSize = tableThickness / 2;
+horizBarHoleDiam = tableHoleSize + 2 * cylinderFudge;
 
 
 threadPitch = 0.7;  // M4
@@ -131,10 +132,6 @@ tablePillarPad = tableThickness / 3;
 pillarHeight				= tableCenterZ - platformCenterZ + (platformThickness + tableThickness) / 2 - tablePillarPad;
 pillarCenterZ 		= platformCenterZ + (pillarHeight - platformThickness) / 2;
 
-pillarRadius = pillarDiam / 2;
-pillarMaterialThickness = max(2.0, pillarRadius * 0.35);
-pillarRadiusCut = pillarRadius - pillarMaterialThickness;
-
 $fn = 80;
 
 function getScaleFactor() = coilRadius > COIL_RADIUS_REFERENCE ? pow(SCALE_FACTOR, 0.75) : SCALE_FACTOR;
@@ -144,7 +141,7 @@ function getPillarCenterX() = let (centerX = 0.5 * (coilRadius / 2 - coilTotalTh
 function getPillarFlipSingsX() = pillarCenterX > 0 ? [-1, 1] : [1];
 
 
-partnum = 11;
+partnum = 1;
 
 if (partnum == 0) {
     echo(">>> Physical coil diameter (same as platform length) ", 2 * coilFlangeRadius);
@@ -162,7 +159,7 @@ if (partnum == 0) {
 /* FLAT COILS */
 if (partnum == 1) bottomHalfHelmholtzCoil();
 if (partnum == 2) topHalfHelmholtzCoil();
-if (partnum == 3) drawHelmholtzCoilFlat();
+if (partnum == 3) helmholtzSingleCoil();
 
 /* FLAT REST OF THE MODELS */
 if (partnum == 4) drawHorizontalBarSupport();  // 2 pcs
@@ -187,29 +184,28 @@ module drawTestParts() {
         }
     }
     
-    module testReinforcementCylinder() {
-        reinfTestCylinderThickness = cylinderReinforcementDiameter / 2 - pillarDiam / 2;
-        reinfTestCylinderRadius = cylinderReinforcementDiameter / 2 - reinfTestCylinderThickness / 2;
-        translate([0, 50, 0])
-        drawReinforcementCylinder(outerRadius=reinfTestCylinderRadius);
-    }
-    
     module testPillar() {
+        heightDraw = cylinderReinforcementHeight;
+        
         translate([0, -15, 0])
         intersection() {
+            translate([0, 0, -pillarHeight / 2 + heightDraw / 2])
             drawPillar();
-            cube([pillarDiam, pillarDiam, cylinderReinforcementHeight], center=true);
+            cube([pillarDiam, pillarDiam, heightDraw], center=true);
         }
     }
     
     module testCoilRetainer() {
+        retainerHeightWithDepth = retainerDepth + retainerCoilHolderHeight;
+        
         translate([30, 0, 0])
-        rotate([90, 0, 0])
         intersection() {
-            translate([coilRadius / 2, 0, 0])
+            translate([coilRadius / 2, 0, retainerDepth / 2])
             drawRetainer();
-            translate([0, 0, retainerCoilHolderHeight / 2 + retainerCoilHolderThickness / 2])
-            cube([coilTotalThickness + retainerCoilHolderThickness + 2 * FUDGE_SIDE, retainerWidth, retainerCoilHolderHeight + retainerCoilHolderThickness], center=true);
+            translate([0, 0, retainerHeightWithDepth / 2])
+            cube([coilTotalThickness + 2 * retainerCoilHolderThickness, retainerWidth, retainerHeightWithDepth], center=true);
+            //translate([0, 0, -retainerDepth /2])
+            //cube(retainerDepth, center=true);
         }
     }
     
@@ -237,9 +233,10 @@ module drawTestParts() {
     }
     
     testWireHook();
-    testReinforcementCylinder();
+    translate([0, 50, 0]) drawReinforcementCylinder();
     testPillar();
     testCoilRetainer();
+    translate([20, 20, 0]) tableHollowPaddedReinforcement();
     translate([-40, coilRadius, 0]) testCoilHalfer(bottom=true);
     translate([0, 65, 0]) testCoilHalfer(bottom=false);
     testWallBananaPlugHole();
@@ -297,11 +294,7 @@ module drawHorizontalBarSupport() {
 
 
 module drawPillar() {
-    if (pillarRadiusCut >= 1) {
-        donut(outerRadius=pillarRadius, innerRadius=pillarRadiusCut, height=pillarHeight);
-    } else {
-        cylinder(r=pillarRadius, h=pillarHeight, center=true);
-    }
+    rcylinder(h=pillarHeight, d=pillarDiam);
 }
 
 
@@ -329,7 +322,7 @@ module drawPlatformTable()
                 translate( [flipX * pillarCenterX, flipY * pillarCenterY, 0] )
                 if (reinforce) {
                     translate( [0, 0, - tableThickness / 2 - cylinderReinforcementHeight / 2 + manifoldCorrection] )
-                    drawReinforcementCylinder();
+                    rotate([0, 180, 0]) drawReinforcementCylinder();
                 }
                 else {
                     translate( [0, 0, - tableThickness / 6] )
@@ -341,21 +334,33 @@ module drawPlatformTable()
     
     module reinforcementFloorCut()
     {
-        cylinder( r=pillarDiam / 2 + cylinderReinforcementFudge,
+        cylinder( r=pillarDiam / 2 + cylinderFudge,
                   h=tableThickness - tablePillarPad + 2 * FUDGE_SIDE,
                   center=true ); 
     }
     
     module drawTableHorizontalBarReinforcement() {
-        cubeReinforcementSize = tableThickness - 2 * manifoldCorrection;
         cubeReinforcementPadToCoil = 2 * FUDGE_SIDE;  // pad to coil from the reinf block
         cubeReinforcementHeight = tableCoilPad - cubeReinforcementPadToCoil;
+        
+        module drawBoxWithHole(flipY) {
+            translate([-(tableWidth / 2 + cubeReinforcementHeight / 2 - manifoldCorrection), flipY * tableHoleY, 0])
+            tableHollowPaddedReinforcement();
+        }
 
-        for (flipX = [-1, 1]) {
-            for (flipY = [-1, 1]) {
-                translate([flipX * (tableWidth / 2 + cubeReinforcementHeight / 2 - manifoldCorrection), flipY * tableHoleY, 0])
-                cube([tableCoilPad, cubeReinforcementSize, cubeReinforcementSize], center=true);
-            }
+        for (flipY = [-1, 1]) {
+            drawBoxWithHole(flipY);
+            mirror([1, 0, 0]) drawBoxWithHole(flipY);
+        }
+    }
+    
+    
+    module tableHorizBarCut() {
+        
+        for (flipY = [-1, 1]) {
+            translate([0, flipY * tableHoleY, 0])
+            rotate([0, 90, 0])
+            cylinder(h=coilRadius, d=horizBarHoleDiam, center=true);
         }
     }
 
@@ -363,28 +368,33 @@ module drawPlatformTable()
     difference() {
         union() {
             cube( tableDimensions, center=true );
-            
             drawTableHorizontalBarReinforcement();
-            
             postReinforcement(true);
         }
-        
         postReinforcement(false);
-        
-        for (flipY = [-1, 1]) {
-            translate([0, flipY * tableHoleY, 0])
-            rotate([0, 90, 0])
-            cylinder(h=coilRadius, d=tableHoleSize + 2 * FUDGE_SIDE, center=true);
-        }
+        tableHorizBarCut();
     }
 }
 
 
-module drawReinforcementCylinder(outerRadius=cylinderReinforcementDiameter / 2)
+module tableHollowPaddedReinforcement() {
+    cubeReinforcementSize = tableThickness - 2 * manifoldCorrection;
+
+    difference() {
+        cube([tableCoilPad, cubeReinforcementSize, cubeReinforcementSize], center=true);
+        
+        rotate([0, 90, 0])
+        rcylinderCut(h=tableCoilPad + 2 * manifoldCorrection, d=horizBarHoleDiam, which="bottom");
+    }
+}
+
+
+module drawReinforcementCylinder()
 {
-    donut( outerRadius=outerRadius,
-       innerRadius = pillarDiam / 2 + cylinderReinforcementFudge,
-       height=cylinderReinforcementHeight );
+    difference() {
+		cylinder(h=cylinderReinforcementHeight, d=cylinderReinforcementDiameter, center=true);
+		rcylinderCut(h=cylinderReinforcementHeight + 2 * manifoldCorrection, d=pillarDiam + 2 * cylinderFudge, which="top");
+	}
 }
 
 
@@ -450,7 +460,7 @@ module drawPlatform()
         rangeUsable = coilRadius - 2 * (coilTotalThickness / 2 + padToCoil + hookHalfWidth);
         
         // tight firmly
-        hookAngle = 180 - asin((wireDiamNominal + hookHalfWidth) / hookRouter);
+        hookAngle = 180 - asin((wireDiam + hookHalfWidth) / hookRouter);
         
         if (rangeUsable > hookThickness) {
             hook(0);
@@ -511,7 +521,7 @@ module drawPlatform()
     module reinforcementFloorCut()
     {
         translate( [0, 0, postReinforcementOffsetZ - platformThickness / 2] )
-        cylinder( r=pillarDiam / 2 + cylinderReinforcementFudge,
+        cylinder( r=pillarDiam / 2 + cylinderFudge,
                   h=platformThickness + cylinderReinforcementHeight + manifoldCorrection * 2,
                   center=true ); 
     }
@@ -612,13 +622,6 @@ module drawHelmholtzCoilsOnScene()
 		// Show the usable array grayed out
 		// cylinder( r=coilHomogeneousDiam / 2, h=coilRadius, center = true );	
 	}
-}
-
-
-
-module drawHelmholtzCoilFlat()
-{
-    helmholtzSingleCoil();
 }
 
 
@@ -745,7 +748,7 @@ module helmholtzSingleCoil()
         
         for (flipY = [-1, 1]) {
             translate([-tableCenterZ, flipY * tableHoleY, 0])
-            cylinder(h=coilTotalThickness + 2 * manifoldCorrection, d=tableHoleSize + 2 * FUDGE_SIDE, center=true);
+            rcylinderCut(h=coilTotalThickness + 2 * manifoldCorrection, d=horizBarHoleDiam);
         }
 	}
 }
@@ -760,3 +763,56 @@ module donut(outerRadius, innerRadius, height)
 	}
 }
 
+
+module rcylinderCut(h, d, pad=1.0, which="both") {
+
+    module cylinderEdgeRoundCutForHole(radius, pad, correction=manifoldCorrection) {
+        squareSize = pad + correction;
+        
+        rotate_extrude(convexity = 10)
+        translate([radius + pad, 0, 0])
+        difference() {
+            translate([-squareSize, -squareSize, 0]) square(squareSize, center=false);
+            circle(r=pad);
+        }
+    }
+
+    
+    module cutEdge() {
+        translate([0, 0, -h / 2 + pad])
+        cylinderEdgeRoundCutForHole(radius=d / 2, pad=pad);
+    }
+    
+    union() {
+        cylinder(h=h, d=d, center=true);
+        if (which == "bottom" || which == "both") cutEdge();
+        if (which == "top" || which == "both") mirror([0, 0, 1]) cutEdge();
+    }
+}
+
+
+/* Round cylinder */
+module rcylinder(h, d, pad=1.0) {
+
+    module cylinderEdgeRoundCutForSoild(radius, pad, correction=manifoldCorrection) {
+        squareSize = pad + correction;
+        
+        rotate_extrude(convexity = 10)
+        translate([radius - pad, 0, 0])
+        difference() {
+            square(squareSize, center=false);
+            circle(r=pad);
+        }
+    }
+    
+    module cutEdge() {
+        translate([0, 0, h / 2 - pad])
+        cylinderEdgeRoundCutForSoild(radius=d / 2, pad=pad);
+    }
+    
+    difference() {
+        cylinder(h=h, d=d, center=true);
+        cutEdge();
+        mirror([0, 0, 1]) cutEdge();
+    }
+}
