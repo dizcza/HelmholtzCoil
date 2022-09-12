@@ -141,7 +141,7 @@ function getPillarCenterX() = let (centerX = 0.5 * (coilRadius / 2 - coilTotalTh
 function getPillarFlipSingsX() = pillarCenterX > 0 ? [-1, 1] : [1];
 
 
-partnum = 1;
+partnum = 8;
 
 if (partnum == 0) {
     echo(">>> Physical coil diameter (same as platform length) ", 2 * coilFlangeRadius);
@@ -202,10 +202,9 @@ module drawTestParts() {
         intersection() {
             translate([coilRadius / 2, 0, retainerDepth / 2])
             drawRetainer();
+            
             translate([0, 0, retainerHeightWithDepth / 2])
             cube([coilTotalThickness + 2 * retainerCoilHolderThickness, retainerWidth, retainerHeightWithDepth], center=true);
-            //translate([0, 0, -retainerDepth /2])
-            //cube(retainerDepth, center=true);
         }
     }
     
@@ -545,19 +544,15 @@ module drawPlatform()
 
     module platformFilled()
     {
-        union()
-		{
-			{
-				cube( [platformWidth, platformLength, platformThickness], center=true );
-                wallUser();
-                wireHooks();
-			}
-            
-            drawPlatformRetainers();
-   
-			// Post reinforcement
-            postReinforcement(true);
-		}
+
+        cube( [platformWidth, platformLength, platformThickness], center=true );
+        wallUser();
+        wireHooks();
+
+        drawPlatformRetainers();
+
+        // Post reinforcement
+        postReinforcement(true);
     }
 
 	difference()
@@ -584,19 +579,21 @@ module drawRetainersOnScene()
 module drawRetainer(length=retainerLength, depth=retainerDepth, blockThickness=retainerCoilHolderThickness)
 {
 	cube( [length, retainerWidth, depth], center=true );
+    
 	translate( [coilRadius / 2, 0, 0] )
-		retainerBlocks(thickness=blockThickness);
+    retainerBlocks(thickness=blockThickness);
+    
 	translate( [-coilRadius / 2, 0, 0] )
-		retainerBlocks(thickness=blockThickness);
+    retainerBlocks(thickness=blockThickness);
 }
 
 
-module retainerBlocks(thickness=retainerCoilHolderThickness)
+module retainerBlocks(thickness=retainerCoilHolderThickness, fudge=0.2)
 {
     // Fudge must be added to one of the sides only.
-    retainerBlockDimensions		= [thickness - FUDGE_SIDE, retainerWidth, retainerCoilHolderHeight];
+    retainerBlockDimensions		= [thickness - fudge, retainerWidth, retainerCoilHolderHeight];
     
-    retainerBlockOffset1		= [(coilTotalThickness + thickness) / 2 + FUDGE_SIDE / 2, 0, (retainerDepth + retainerCoilHolderHeight) / 2 - manifoldCorrection];
+    retainerBlockOffset1		= [(coilTotalThickness + thickness) / 2 + fudge / 2, 0, (retainerDepth + retainerCoilHolderHeight) / 2 - manifoldCorrection];
     retainerBlockOffset2		= [- retainerBlockOffset1[0], retainerBlockOffset1[1], retainerBlockOffset1[2]];
     
 	translate( retainerBlockOffset1 )
