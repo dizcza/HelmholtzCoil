@@ -40,14 +40,13 @@ coilRadius						= 130;		// Coil Radius in mm's
 coilLayersNum                   = 8;
 coilWiresNum                    = 6;
 
-FUDGE_SIDE                      = 0.3;
 COIL_RADIUS_REFERENCE           = 130;
 SCALE_FACTOR                    = coilRadius / COIL_RADIUS_REFERENCE;
 SCALE_FACTOR_SQRT               = getScaleFactor();
 
 wireDiamNominal                 = 1.2;
 wireDiam				        = wireDiamNominal + 0.1;		// Wire diameter in mm's, note this includes insulation (insulation thickness varies)
-windingFudge			= FUDGE_SIDE;		// Fudge factor in mm's to add to the space for the coil to allow for 3D printer inaccuracy	
+windingFudge			        = 0.3;		// Fudge factor in mm's to add to the space for the coil to allow for 3D printer inaccuracy	
 coilWindingWidth	            = wireDiam * coilWiresNum + windingFudge;	// The space for the wire to fit in on the former
 coilWindingHeight               = wireDiam * coilLayersNum;
 coilFlangeHeightPad             = 3.0;
@@ -83,7 +82,7 @@ platformThickness		= 7.0 * SCALE_FACTOR_SQRT;
 platformLength			= 2.0 * coilFlangeRadius;
 
 wallUserThickness		= max(3.0, 4.0 * SCALE_FACTOR_SQRT);
-wallUserHoleDiam		= 4.0 + 2 * FUDGE_SIDE;  // M4
+wallUserHoleDiam		= 5.5;  // M4
 
 tableThickness				= 8.0;
 pillarDiam			        = 10 * SCALE_FACTOR_SQRT;
@@ -127,7 +126,7 @@ nutHeight = 5.0;
 
 HorizontalBarSupportLen = coilRadius + coilTotalThickness + 4 * nutHeight;
 
-tablePillarPad = tableThickness / 3;
+tablePillarPad = tableThickness / 2;
 
 pillarHeight				= tableCenterZ - platformCenterZ + (platformThickness + tableThickness) / 2 - tablePillarPad;
 pillarCenterZ 		= platformCenterZ + (pillarHeight - platformThickness) / 2;
@@ -141,7 +140,7 @@ function getPillarCenterX() = let (centerX = 0.5 * (coilRadius / 2 - coilTotalTh
 function getPillarFlipSingsX() = pillarCenterX > 0 ? [-1, 1] : [1];
 
 
-partnum = 8;
+partnum = 6;
 
 if (partnum == 0) {
     echo(">>> Physical coil diameter (same as platform length) ", 2 * coilFlangeRadius);
@@ -264,8 +263,8 @@ module M4_nut(h=nutHeight, d=8) {
 }
 
 
-module drawNutsOnScene() {
-    offsetX = coilRadius / 2 + coilTotalThickness / 2 + nutHeight / 2 + FUDGE_SIDE;
+module drawNutsOnScene(offsetFromCoil=0.3) {
+    offsetX = coilRadius / 2 + coilTotalThickness / 2 + nutHeight / 2 + offsetFromCoil;
     for (flipX = [-1, 1]) {
         for (flipY = [-1, 1]) {
             translate([flipX * offsetX, flipY * tableHoleY, tableCenterZ])
@@ -324,7 +323,7 @@ module drawPlatformTable()
                     rotate([0, 180, 0]) drawReinforcementCylinder();
                 }
                 else {
-                    translate( [0, 0, - tableThickness / 6] )
+                    translate( [0, 0, - tablePillarPad / 2] )
                     reinforcementFloorCut();
                 }
             }
@@ -334,12 +333,12 @@ module drawPlatformTable()
     module reinforcementFloorCut()
     {
         cylinder( r=pillarDiam / 2 + cylinderFudge,
-                  h=tableThickness - tablePillarPad + 2 * FUDGE_SIDE,
+                  h=tableThickness - tablePillarPad + manifoldCorrection,
                   center=true ); 
     }
     
     module drawTableHorizontalBarReinforcement() {
-        cubeReinforcementPadToCoil = 2 * FUDGE_SIDE;  // pad to coil from the reinf block
+        cubeReinforcementPadToCoil = 0.5;  // pad to coil from the reinf block
         cubeReinforcementHeight = tableCoilPad - cubeReinforcementPadToCoil;
         
         module drawBoxWithHole(flipY) {
