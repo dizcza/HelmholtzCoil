@@ -57,12 +57,11 @@ $ python helmholtz.py
 ### Magpylib simulation
 
 The coil is simulated as a set of closed loop currents of the same direction (winding).
-On the figure below, the coils are oriented vertically (Z axis).
+On the figure below, the coils are oriented vertically, and the uniform magnetic field in the center of the coils is oriented along the X axis.
 The distance between the coil equals the coil radius (*Helmholtz coil*).
-Two wires connect the coils to simulate a real winding.
 
 ![](screenshots/plotly.png)
 
-Magnetic field and its strength along the Z axis is shown below.
+Magnetic field and its strength along the X axis is shown below.
 
 ![](screenshots/magnetic_plot.png)
