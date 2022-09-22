@@ -5,6 +5,7 @@ import magpylib as magpy
 import matplotlib.pyplot as plt
 import numpy as np
 from magpylib.current import Loop
+from scipy.spatial.transform import Rotation as R
 
 Mu0 = 4 * np.pi * 1e-7
 
@@ -30,9 +31,9 @@ class HelmholtzCoil(magpy.Collection):
         current : float
             The applied current in A.
         wires : int
-            No. of wires in a layer.
+            No. of wires per layer.
         layers : int
-            No. of stacked layers with ``wires``.
+            No. of stacked layers of wires.
             Even no. of layers end up winding on the same side of a coil,
             odd - opposite sides.
         fast : bool
@@ -53,10 +54,9 @@ class HelmholtzCoil(magpy.Collection):
             coil1 = self._coil_loop()
         else:
             coil1 = self._coil_spiral()
-        coil1.position = (0, 0, -self.radius / 2)
-        coil2 = coil1.copy(position=(0, 0, self.radius / 2))
+        coil1.position = (-self.radius / 2, 0, 0)
+        coil2 = coil1.copy(position=(self.radius / 2, 0, 0))
         self.add(coil1, coil2)
-        self.add_coils_connection_cables(coil1, coil2)
 
     @property
     def n_turns(self):
@@ -141,55 +141,37 @@ class HelmholtzCoil(magpy.Collection):
             f"\tHomogeneous region (tol={tol}): {b0_width:.0f} mm"
         return s
 
-    def add_coils_connection_cables(self, coil1, coil2):
-        # Has negligible effect
-        wire1, wire2, wire3 = coil1.sources[-1], coil2.sources[0], \
-                              coil2.sources[-1]
-        if isinstance(wire1, magpy.current.Loop):
-            v1_end = [wire1.diameter / 2, 0, 0] + wire1.position
-            v2_begin = [wire2.diameter / 2, 0, 0] + wire2.position
-            v2_end = [wire3.diameter / 2, 0, 0] + wire3.position
-        else:
-            v1_end = wire1.vertices[-1] + coil1.position
-            v2_begin = wire2.vertices[0] + coil2.position
-            v2_end = wire3.vertices[-1] + coil2.position
-        cable1 = magpy.current.Line(
-            current=self.current,
-            vertices=np.stack([v1_end, v2_begin])
-        )
-        cable2 = magpy.current.Line(
-            current=self.current,
-            vertices=np.stack([v2_end, v1_end])
-        )
-        self.add(cable1, cable2)
-
     def layer_radius(self, layer_id):
         x_layer = self.wire.d_outer * (layer_id - (self.n_layers - 1) / 2)
         return self.radius + x_layer
 
     def _coil_loop(self):
         coil1 = magpy.Collection(style_label='coil1')
+        rotation = R.from_euler('y', 90, degrees=True)
         for layer_id in range(self.n_layers):
             loop_diameter = 2 * self.layer_radius(layer_id)
             for wire_id in range(self.n_wires):
-                z_wire = self.wire.d_outer * (wire_id - (self.n_wires - 1) / 2)
+                x_wire = self.wire.d_outer * (wire_id - (self.n_wires - 1) / 2)
                 coil1.add(Loop(current=self.current, diameter=loop_diameter,
-                               position=(0, 0, z_wire)))
+                               orientation=rotation,
+                               position=(x_wire, 0, 0)))
         return coil1
 
     def _coil_spiral(self):
         coil1 = magpy.Collection(style_label='coil1')
         phase = np.linspace(0, self.n_wires * 2 * np.pi, num=1000)
         half_width = self.wire.d_outer * (self.n_wires - 1) / 2
-        z_ticks = np.linspace(-half_width, half_width, phase.size)
+        rotation = R.from_euler('y', 90, degrees=True)
+        x_ticks = np.linspace(-half_width, half_width, phase.size)
         for layer_id in range(self.n_layers):
             loop_radius = self.layer_radius(layer_id)
             vertices = np.c_[loop_radius * np.cos(phase),
                              loop_radius * np.sin(phase),
-                             z_ticks]
+                             x_ticks]
             coil_layer = magpy.current.Line(
                 current=self.current,
-                vertices=vertices
+                vertices=vertices,
+                orientation=rotation,
             )
             coil1.add(coil_layer)
         return coil1
@@ -201,17 +183,17 @@ class HelmholtzCoil(magpy.Collection):
         b0_mT = b0 * 1e6
         return b0_mT
 
-    def create_grid(self, n=100, dim=2):
-        grid_z = np.linspace(-self.radius, self.radius, num=n)
-        grid = np.zeros((grid_z.shape[0], 3))
-        grid[:, dim] = grid_z
+    def create_grid(self, n=100, dim=0):
+        grid_x = np.linspace(-self.radius, self.radius, num=n)
+        grid = np.zeros((grid_x.shape[0], 3))
+        grid[:, dim] = grid_x
         return grid
 
-    def get_homogeneous_region(self, B, dim=2, tol=0.01):
-        Bz = B[:, dim]
-        B0 = Bz[B.shape[0] // 2]
-        Bz_norm = Bz / B0
-        idx_valid = np.nonzero(np.abs(Bz_norm - 1) < tol)[0]
+    def get_homogeneous_region(self, B, dim=0, tol=0.01):
+        Bx = B[:, dim]
+        B0 = Bx[B.shape[0] // 2]
+        Bx_norm = Bx / B0
+        idx_valid = np.nonzero(np.abs(Bx_norm - 1) < tol)[0]
         if np.unique(np.diff(idx_valid)).size != 1:
             warnings.warn("Non-convex B field")
         left, right = idx_valid[0], idx_valid[-1]
@@ -221,7 +203,7 @@ class HelmholtzCoil(magpy.Collection):
         grid = self.create_grid()
         B = self.getB(grid)
         left, right = self.get_homogeneous_region(B, tol=tol)
-        z_left, z_right = grid[left, 2], grid[right, 2]
+        z_left, z_right = grid[left, 0], grid[right, 0]
         z_width = z_right - z_left
         return z_width
 
@@ -281,21 +263,21 @@ def plot_streamplot(helmholtz: HelmholtzCoil, ax, dim=(0, 2)):
     plt.colorbar(sp.lines, ax=ax, label='[mT]')
 
 
-def plot_Bz(helmholtz: HelmholtzCoil, ax, dim=2, tol=0.01):
+def plot_Bz(helmholtz: HelmholtzCoil, ax, dim=0, tol=0.01):
     grid = helmholtz.create_grid(dim=dim)
     B = helmholtz.getB(grid)
     ax.plot(grid, B, label=['Bx', 'By', 'Bz'])
 
-    Bz = B[:, dim]
-    B0 = Bz[B.shape[0] // 2]
+    Bx = B[:, dim]
+    B0 = Bx[B.shape[0] // 2]
     print(f"\n{B0=:.5f}, expected {helmholtz.calc_b0():.5f}")
     left, right = helmholtz.get_homogeneous_region(B, dim=dim, tol=tol)
-    z_left, z_right = grid[left, 2], grid[right, 2]
-    z_width = z_right - z_left
-    ax.vlines(x=[z_left, z_right], ymin=B.min(),
-                 ymax=[Bz[left], Bz[right]],
+    x_left, x_right = grid[left, dim], grid[right, dim]
+    x_width = x_right - x_left
+    ax.vlines(x=[x_left, x_right], ymin=B.min(),
+                 ymax=[Bx[left], Bx[right]],
                  linestyles='--', colors='grey', alpha=0.5)
-    ax.text(0.5, 0.5, f"Tolerance {tol}\nwidth {int(z_width)} mm",
+    ax.text(0.5, 0.5, f"Tolerance {tol}\nwidth {int(x_width)} mm",
                transform=ax.transAxes, horizontalalignment='center',
                verticalalignment='center')
 
@@ -310,7 +292,7 @@ def plot_Bz(helmholtz: HelmholtzCoil, ax, dim=2, tol=0.01):
 
 # print(calc_mechanical_tolerance())
 
-helmholtz = HelmholtzCoil(wire=LITZ_75)
+helmholtz = HelmholtzCoil(wire=LITZ_75, fast=False)
 print(helmholtz)
 
 magpy.show(*helmholtz, backend='plotly')
@@ -318,8 +300,8 @@ magpy.show(*helmholtz, backend='plotly')
 fig, axes = plt.subplots(nrows=2)
 axes = np.atleast_1d(axes)
 
-plot_streamplot(helmholtz, axes[0])
-plot_Bz(helmholtz, axes[-1])
+# plot_streamplot(helmholtz, axes[0])
+# plot_Bz(helmholtz, axes[-1])
 
 plt.tight_layout()
 plt.show()
