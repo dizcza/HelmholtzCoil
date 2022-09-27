@@ -237,8 +237,8 @@ def calc_mechanical_tolerance(coil_rot=1., axis_dx=1.):
     return 2 * tol_percent / 100.
 
 
-def plot_streamplot(helmholtz: HelmholtzCoil, ax, dim=(0, 2)):
-    ts = np.linspace(-2 * helmholtz.radius, 2 * helmholtz.radius, 100)
+def plot_streamplot(helmholtz: HelmholtzCoil, ax, dim=(0, 1)):
+    ts = np.linspace(-2 * helmholtz.radius, 2 * helmholtz.radius, 10)
     grid = np.zeros((ts.shape[0], ts.shape[0], 3), dtype=np.float32)
     grid[:, :, dim] = np.stack(np.meshgrid(ts, ts), axis=2)
     dim_x, dim_y = dim
@@ -300,8 +300,8 @@ magpy.show(*helmholtz, backend='plotly')
 fig, axes = plt.subplots(nrows=2)
 axes = np.atleast_1d(axes)
 
-# plot_streamplot(helmholtz, axes[0])
-# plot_Bz(helmholtz, axes[-1])
+plot_streamplot(helmholtz, axes[0])
+plot_Bz(helmholtz, axes[-1])
 
 plt.tight_layout()
 plt.show()
